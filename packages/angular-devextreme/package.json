@@ -1,0 +1,20 @@
+{
+  "name": "@cnx-dev/angular-devextreme",
+  "version": "1.0.1",
+  "description": "CNX Dev - Angular DevExtreme UI Component Library",
+  "author": "cnx-dev",
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "@angular/common": "^17.3.0",
+    "@angular/core": "^17.3.0",
+    "@angular/forms": "^17.3.0",
+    "devextreme": "^23.2.0",
+    "devextreme-angular": "^23.2.0",
+    "rxjs": "~7.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular/forms": {
+      "optional": true
+    }
+  }
+}

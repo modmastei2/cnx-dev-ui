@@ -1,0 +1,31 @@
+<dx-select-box
+  #selectBox
+  [id]="'cnx_select_box_' + id"
+  [name]="'cnx_select_box_' + name"
+  [width]="width"
+  [placeholder]="placeholder"
+  [displayExpr]="displayExpr"
+  [valueExpr]="valueExpr"
+  [deferRendering]="true"
+  [searchExpr]="searchExpr"
+  [searchEnabled]="searchEnabled"
+  [searchTimeout]="searchTimeout"
+  [showClearButton]="showClearButton"
+  [value]="value"
+  [dataSource]="dataSource"
+  itemTemplate="itemTemplate"
+  [dropDownOptions]="{ minWidth: '100%', width: dropdownWidth }"
+  [maxLength]="maxLength"
+  [disabled]="disabled"
+  (onValueChanged)="onValueChanged($event)"
+  (onEnterKey)="onEnterKey()"
+>
+  <div *dxTemplate="let data of 'itemTemplate'">
+    <div>
+      <span
+        [title]="data[dropdownExpr]"
+        [innerText]="data[dropdownExpr]"
+      ></span>
+    </div>
+  </div>
+</dx-select-box>
