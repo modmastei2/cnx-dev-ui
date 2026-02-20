@@ -32,12 +32,14 @@ export class SelectBoxComponent implements OnInit, OnChanges {
   ) {}
 
   public ngOnInit(): void {
-    this.setupDataSource();
+    if (!this.customDataSource) {
+      this.setupDataSource();
+    }
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
     const change = changes['cascadeBy'];
-    if (!!change && !change.firstChange) {
+    if (!!change && !change.firstChange && !this.customDataSource) {
       const { currentValue, previousValue } = change;
       const isChange = JSON.stringify(currentValue) !== JSON.stringify(previousValue);
       if (isChange) this.setupDataSource();
@@ -100,6 +102,7 @@ export class SelectBoxComponent implements OnInit, OnChanges {
   private _value: string = '';
 
   public dataSource!: DataSource;
+  @Input('customDataSource') public customDataSource?: any;
 
   @Input('dropdownWidth') public dropdownWidth!: string | number;
   @Input('maxLength') public maxLength: number = 0;

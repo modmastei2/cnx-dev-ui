@@ -12,7 +12,7 @@
   [searchTimeout]="searchTimeout"
   [showClearButton]="showClearButton"
   [value]="value"
-  [dataSource]="dataSource"
+  [dataSource]="customDataSource || dataSource"
   itemTemplate="itemTemplate"
   [dropDownOptions]="{ minWidth: '100%', width: dropdownWidth }"
   [maxLength]="maxLength"
