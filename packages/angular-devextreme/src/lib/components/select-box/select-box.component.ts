@@ -108,7 +108,7 @@ export class SelectBoxComponent implements OnInit, OnChanges {
   @Input('maxLength') public maxLength: number = 0;
   @Input('disabled') public disabled: boolean = false;
   @Input('cascadeBy') public cascadeBy: any;
-  @Input('selectBoxKey') public selectBoxKey: SelectBoxKey = null;
+  @Input('selectBoxKey') public selectBoxKey: SelectBoxKey | null | undefined = null;
   @Input('ignoreValue') public ignoreValue!: string[];
 
   @Output('onValueChanged') public eventValueChanged = new EventEmitter<any>();

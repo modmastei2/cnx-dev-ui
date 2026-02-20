@@ -3,8 +3,8 @@ import { LoadOptions } from 'devextreme/data';
 export interface ModuleSelectBoxKeys {}
 
 export type SelectBoxKey = keyof ModuleSelectBoxKeys extends never
-  ? string | null | undefined
-  : keyof ModuleSelectBoxKeys | null | undefined;
+  ? string
+  : keyof ModuleSelectBoxKeys;
 
 export class SelectBoxParam {
   key?: any;

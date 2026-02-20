@@ -6,5 +6,5 @@ import { SelectBoxKey, SelectBoxLoadResult, SelectBoxParam } from '../models/sel
  * วิธีนี้ทำให้ Library ไม่ผูกติดกับ API ของโปรเจกต์ใดโปรเจกต์หนึ่ง
  */
 export interface SelectBoxDataProvider {
-  getService(key: SelectBoxKey, param: SelectBoxParam): Observable<SelectBoxLoadResult>;
+  getService(key: SelectBoxKey | null | undefined, param: SelectBoxParam): Observable<SelectBoxLoadResult>;
 }

@@ -2,7 +2,10 @@
   "name": "@cnx-dev-ui/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build:lib": "nx build angular-devextreme",
+    "publish:lib": "npm run build:lib && cd dist/packages/angular-devextreme && npm publish --access public"
+  },
   "private": true,
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "~2.1.2",

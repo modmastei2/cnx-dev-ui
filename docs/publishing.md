@@ -29,12 +29,10 @@
 
 ### 2. Build Library (APF)
 
-รันคำสั่ง Build ผ่าน Nx เพื่อให้ระบบ Compile โค้ดของ Library ให้อยู่ในรูปแบบ **Angular Package Format (APF)** ซึ่งจะได้ไฟล์สำหรับแจกจ่ายในโฟลเดอร์ `dist/packages/angular-devextreme`
-
-รันคำสั่งที่ Root ของโปรเจกต์ (`cnx-dev-ui`):
+คุณสามารถสั่ง Build อย่างเดียวได้ (เพื่อให้ได้ไฟล์ `.tgz` ล่าสุด ก่อนแจกจ่าย) ด้วยคำสั่ง:
 
 ```bash
-npx nx build angular-devextreme
+npm run build:lib
 ```
 
 ### 3. Login เข้าสู่ระบบ NPM
@@ -53,16 +51,12 @@ npm login
 npm login --registry=https://npm.your-company.com
 ```
 
-### 4. Publish ขึ้นระบบ
+### 4. Publish ขึ้นระบบ (แบบรวบยอด)
 
-ย้ายเข้าไปโฟลเดอร์ที่ Build เสร็จแล้ว และรันคำสั่ง Publish
+รันคำสั่งเดียวที่จบกระบวนการ (มันจะสั่ง `build:lib` ให้ก่อน แล้วเข้าไปในแฟ้ม `dist/...` เพื่อ Publish ให้อัตโนมัติ)
 
 ```bash
-# 1. เข้าไปที่โฟลเดอร์ Dist
-cd dist/packages/angular-devextreme
-
-# 2. รันคำสั่ง Publish
-npm publish --access public
+npm run publish:lib
 ```
 
 > ⚠️ **ข้อควรระวัง (403 Forbidden)**
@@ -70,6 +64,7 @@ npm publish --access public
 > ให้คุณหยิบมือถือมาเปิดแอป Authenticator แล้วนำรหัส 6 หลัก มาใส่ต่อท้ายคำสั่ง Publish:
 >
 > ```bash
+> cd dist/packages/angular-devextreme
 > npm publish --access public --otp=123456
 > ```
 
