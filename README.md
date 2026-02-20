@@ -8,6 +8,10 @@
 
 - [Select Box (Dropdown)](docs/select-box.md) - Dropdown สมาร์ทที่รองรับการโหลดข้อมูลแบบ Dynamic, Cascade, และ Pagination
 
+### 🛠️ คู่มือสำหรับนักพัฒนา (Developer Guides)
+
+- [How to Publish Library](docs/publishing.md) - ขั้นตอนการ Build และ Publish แพ็กเกจขึ้น NPM Registry
+
 ---
 
 ## 🚀 การติดตั้งเบื้องต้น (Getting Started)
