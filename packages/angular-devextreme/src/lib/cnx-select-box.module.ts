@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ModuleWithProviders, NgModule, Type } from '@angular/core';
 import { DxSelectBoxModule, DxTemplateModule } from 'devextreme-angular';
-import { SelectBoxComponent } from './components/select-box/select-box.component';
+import { CnxSelectBoxComponent } from './components/cnx-select-box/cnx-select-box.component';
 import { SelectBoxDataProvider } from './interfaces/select-box.interface';
 import { SELECTBOX_DATA_PROVIDER } from './tokens/select-box.token';
 
@@ -15,9 +15,9 @@ import { SELECTBOX_DATA_PROVIDER } from './tokens/select-box.token';
  * ]
  */
 @NgModule({
-  declarations: [SelectBoxComponent],
+  declarations: [CnxSelectBoxComponent],
   imports: [CommonModule, DxSelectBoxModule, DxTemplateModule],
-  exports: [SelectBoxComponent, DxSelectBoxModule, DxTemplateModule],
+  exports: [CnxSelectBoxComponent, DxSelectBoxModule, DxTemplateModule],
 })
 export class CnxSelectBoxModule {
   static forRoot(

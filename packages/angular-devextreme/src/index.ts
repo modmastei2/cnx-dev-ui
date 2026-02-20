@@ -2,7 +2,7 @@
 export * from './lib/cnx-select-box.module';
 
 // Components
-export * from './lib/components/select-box/select-box.component';
+export * from './lib/components/cnx-select-box/cnx-select-box.component';
 
 // Interfaces
 export * from './lib/interfaces/select-box.interface';

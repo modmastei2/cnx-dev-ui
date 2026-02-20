@@ -13,19 +13,18 @@ import {
 import { ValueChangedEvent } from 'devextreme/ui/select_box';
 import DataSource from 'devextreme/data/data_source';
 import { LoadOptions } from 'devextreme/data';
-import { DxSelectBoxComponent, DxSelectBoxModule, DxTemplateModule } from 'devextreme-angular';
-import { CommonModule } from '@angular/common';
+import { DxSelectBoxComponent } from 'devextreme-angular';
 import { SelectBoxDataProvider } from '../../interfaces/select-box.interface';
 import { SELECTBOX_DATA_PROVIDER } from '../../tokens/select-box.token';
 import { SelectBoxKey, SelectBoxLoadResult, SelectBoxParam } from '../../models/select-box.model';
 
 @Component({
   selector: 'cnx-select-box',
-  templateUrl: './select-box.component.html',
-  styleUrl: './select-box.component.css',
+  templateUrl: './cnx-select-box.component.html',
+  styleUrl: './cnx-select-box.component.css',
   standalone: false,
 })
-export class SelectBoxComponent implements OnInit, OnChanges {
+export class CnxSelectBoxComponent implements OnInit, OnChanges {
   constructor(
     private cdr: ChangeDetectorRef,
     @Inject(SELECTBOX_DATA_PROVIDER) private service: SelectBoxDataProvider
