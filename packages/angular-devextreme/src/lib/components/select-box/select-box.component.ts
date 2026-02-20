@@ -32,17 +32,19 @@ export class SelectBoxComponent implements OnInit, OnChanges {
   ) {}
 
   public ngOnInit(): void {
-    if (!this.customDataSource) {
-      this.setupDataSource();
-    }
+    this.setupDataSource();
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
     const change = changes['cascadeBy'];
-    if (!!change && !change.firstChange && !this.customDataSource) {
+    if (!!change && !change.firstChange) {
       const { currentValue, previousValue } = change;
       const isChange = JSON.stringify(currentValue) !== JSON.stringify(previousValue);
       if (isChange) this.setupDataSource();
+    }
+    const customChange = changes['customDataSource'];
+    if (!!customChange && !customChange.firstChange) {
+      this.setupDataSource();
     }
   }
 
@@ -151,6 +153,30 @@ export class SelectBoxComponent implements OnInit, OnChanges {
         return;
       }
 
+      // -- Handle In-Memory Custom DataSource --
+      if (this.customDataSource && Array.isArray(this.customDataSource)) {
+        let filtered = [...this.customDataSource];
+        if (loadOptions?.searchValue) {
+          const search = loadOptions.searchValue.toString().toLowerCase();
+          filtered = filtered.filter(
+            (item) =>
+              (item[this.searchExpr]?.toString() || '').toLowerCase().includes(search) ||
+              (item[this.displayExpr]?.toString() || '').toLowerCase().includes(search)
+          );
+        }
+        const skip = loadOptions?.skip ?? 0;
+        const take = loadOptions?.take ?? 50;
+        let pagedData = filtered.slice(skip, skip + take);
+
+        if (this.ignoreValue?.length) {
+          pagedData = pagedData.filter((f) => !this.ignoreValue.includes(f[this.valueExpr]));
+        }
+
+        resolve({ data: pagedData, totalCount: filtered.length, hasInitialValue: false });
+        return;
+      }
+      // ----------------------------------------
+
       this.service
         .getService(this.selectBoxKey, {
           key: this.value,
@@ -173,6 +199,14 @@ export class SelectBoxComponent implements OnInit, OnChanges {
         resolve([]);
         return;
       }
+
+      // -- Handle In-Memory Custom DataSource --
+      if (this.customDataSource && Array.isArray(this.customDataSource)) {
+        const found = this.customDataSource.filter((item) => item[this.valueExpr] === key);
+        resolve(found);
+        return;
+      }
+      // ----------------------------------------
 
       this.service
         .getService(this.selectBoxKey, {
