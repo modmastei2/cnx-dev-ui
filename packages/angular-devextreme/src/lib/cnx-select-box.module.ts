@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ModuleWithProviders, NgModule, Type } from '@angular/core';
 import { DxSelectBoxModule, DxTemplateModule } from 'devextreme-angular';
 import { CnxSelectBoxComponent } from './components/cnx-select-box/cnx-select-box.component';
-import { SelectBoxDataProvider } from './interfaces/select-box.interface';
-import { SELECTBOX_DATA_PROVIDER } from './tokens/select-box.token';
+import { SelectBoxDataProvider } from './interfaces/cnx-select-box.interface';
+import { SELECTBOX_DATA_PROVIDER } from './tokens/cnx-select-box.token';
 
 /**
  * Module สำหรับ SelectBox Component

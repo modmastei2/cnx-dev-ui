@@ -1,0 +1,24 @@
+<dx-tag-box
+  #tagBox
+  [id]="id"
+  [name]="name"
+  [width]="width"
+  [placeholder]="placeholder"
+  [displayExpr]="displayExpr"
+  [valueExpr]="valueExpr"
+  [searchExpr]="searchExpr"
+  [searchEnabled]="searchEnabled"
+  [searchTimeout]="searchTimeout"
+  [showClearButton]="showClearButton"
+  [showSelectionControls]="showSelectionControls"
+  [value]="value"
+  [dataSource]="dataSource"
+  [dropDownOptions]="{ minWidth: '100%', width: dropdownWidth }"
+  [maxLength]="maxLength"
+  [disabled]="disabled"
+  [acceptCustomValue]="acceptCustomValue"
+  (onCustomItemCreating)="onCustomItemCreating($event)"
+  (onValueChanged)="onValueChanged($event)"
+  (onEnterKey)="onEnterKey()"
+>
+</dx-tag-box>

@@ -9,25 +9,26 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
+  Optional,
 } from '@angular/core';
-import { ValueChangedEvent } from 'devextreme/ui/select_box';
+import { DxTagBoxComponent } from 'devextreme-angular';
 import DataSource from 'devextreme/data/data_source';
+import { ValueChangedEvent } from 'devextreme/ui/tag_box';
 import { LoadOptions } from 'devextreme/data';
-import { DxSelectBoxComponent } from 'devextreme-angular';
-import { SelectBoxDataProvider } from '../../interfaces/cnx-select-box.interface';
-import { SELECTBOX_DATA_PROVIDER } from '../../tokens/cnx-select-box.token';
-import { SelectBoxKey, SelectBoxLoadResult, SelectBoxParam } from '../../models/cnx-select-box.model';
+import { TagBoxKey, TagBoxParam, TagBoxLoadResult, TagBoxViewModel } from '../../models/cnx-tag-box.model';
+import { TagBoxDataProvider } from '../../interfaces/cnx-tag-box.interface';
+import { TAGBOX_DATA_PROVIDER } from '../../tokens/cnx-tag-box.token';
 
 @Component({
-  selector: 'cnx-select-box',
-  templateUrl: './cnx-select-box.component.html',
-  styleUrl: './cnx-select-box.component.css',
+  selector: 'cnx-tag-box',
+  templateUrl: './cnx-tag-box.component.html',
+  styleUrl: './cnx-tag-box.component.css',
   standalone: false,
 })
-export class CnxSelectBoxComponent implements OnInit, OnChanges {
+export class CnxTagBoxComponent implements OnInit, OnChanges {
   constructor(
-    private cdr: ChangeDetectorRef,
-    @Inject(SELECTBOX_DATA_PROVIDER) private service: SelectBoxDataProvider
+    @Optional() @Inject(TAGBOX_DATA_PROVIDER) private service: TagBoxDataProvider,
+    private cdr: ChangeDetectorRef
   ) {}
 
   public ngOnInit(): void {
@@ -47,60 +48,75 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     }
   }
 
-  @ViewChild('selectBox')
-  public selectBox!: DxSelectBoxComponent;
+  @ViewChild('tagBox') public tagBox!: DxTagBoxComponent;
 
   @Input('id') public id: string = '';
   @Input('name') public name: string = '';
   @Input('width') public width: string | number = '100%';
   @Input('placeholder') public placeholder: string = 'Please select...';
-
+  
   @Input('displayExpr')
   set displayExpr(val: string | null) {
-    const _val = val?.toString() || '';
-    if (_val && _val !== this._displayExpr) this._displayExpr = _val;
+    let _val = val || '';
+    _val = _val.toString();
+    if (!!_val && _val != this.displayExprOption) this.displayExprOption = _val;
   }
-  get displayExpr(): string { return this._displayExpr; }
-  private _displayExpr: string = 'text';
+  get displayExpr(): string {
+    return this.displayExprOption;
+  }
+  private displayExprOption: string = 'text';
 
   @Input('valueExpr')
   set valueExpr(val: string | null) {
-    const _val = val?.toString() || '';
-    if (_val && _val !== this._valueExpr) this._valueExpr = _val;
+    let _val = val || '';
+    _val = _val.toString();
+    if (!!_val && _val != this.valueExprOption) this.valueExprOption = _val;
   }
-  get valueExpr(): string { return this._valueExpr; }
-  private _valueExpr: string = 'value';
+  get valueExpr(): string {
+    return this.valueExprOption;
+  }
+  private valueExprOption: string = 'value';
 
   @Input('searchExpr')
   set searchExpr(val: string | null) {
-    const _val = val?.toString() || '';
-    if (_val && _val !== this._searchExpr) this._searchExpr = _val;
+    let _val = val || '';
+    _val = _val.toString();
+    if (!!_val && _val != this.searchExprOption) this.searchExprOption = _val;
   }
-  get searchExpr(): string { return this._searchExpr; }
-  private _searchExpr: string = 'dropdownText';
+  get searchExpr(): string {
+    return this.searchExprOption;
+  }
+  private searchExprOption: string = 'dropdownText';
 
   @Input('dropdownExpr')
   set dropdownExpr(val: string | null) {
-    const _val = val?.toString() || '';
-    if (_val && _val !== this._dropdownExpr) {
-      this._dropdownExpr = _val;
-      this._searchExpr = _val;
-    }
+    let _val = val || '';
+    _val = _val.toString();
+    if (!!_val && _val != this.dropdownExprOption) this.dropdownExprOption = _val; // fixed old bug mapping wrong prop
   }
-  get dropdownExpr(): string { return this._dropdownExpr; }
-  private _dropdownExpr: string = 'dropdownText';
+  get dropdownExpr(): string {
+    return this.dropdownExprOption;
+  }
+  private dropdownExprOption: string = 'dropdownText';
 
   @Input('searchEnabled') public searchEnabled: boolean = true;
   @Input('searchTimeout') public searchTimeout: number = 500;
   @Input('showClearButton') public showClearButton: boolean = true;
+  @Input('showSelectionControls') public showSelectionControls: boolean = true;
 
   @Input('value')
-  set value(val: string | number | null) {
-    const _val = val?.toString() ?? '';
-    if (_val !== this._value) this._value = _val;
+  set value(val: string[] | number[] | null) {
+    let _val = val || [];
+    _val = _val.map((e) => e.toString());
+
+    if (JSON.stringify(_val) !== JSON.stringify(this._value)) {
+      this._value = _val as string[];
+    }
   }
-  get value(): string { return this._value; }
-  private _value: string = '';
+  get value(): string[] {
+    return this._value;
+  }
+  private _value: string[] = [];
 
   public dataSource!: DataSource;
   @Input('customDataSource') public customDataSource?: any;
@@ -109,15 +125,15 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
   @Input('maxLength') public maxLength: number = 0;
   @Input('disabled') public disabled: boolean = false;
   @Input('cascadeBy') public cascadeBy: any;
-  @Input('selectBoxKey') public selectBoxKey: SelectBoxKey | null | undefined = null;
-  @Input('ignoreValue') public ignoreValue!: string[];
+  @Input('tagBoxKey') public tagBoxKey: TagBoxKey | null | undefined = null;
+  @Input('acceptCustomValue') public acceptCustomValue: boolean = false;
 
   @Output('onValueChanged') public eventValueChanged = new EventEmitter<any>();
-  @Output('onEnterKey') public eventEnterKey = new EventEmitter<void>();
+  @Output('onEnterKey') public eventEnterKey = new EventEmitter<any>();
+  @Output('onCustomItemCreating') public eventCustomItemCreating = new EventEmitter<any>();
 
   private paginate: boolean = true;
   private pageSize: number = 50;
-  private clearValueOnCascade: boolean = false;
   public hasInitialValue: boolean = false;
 
   public onValueChanged($event: ValueChangedEvent): void {
@@ -129,6 +145,10 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     this.eventEnterKey.emit();
   }
 
+  public onCustomItemCreating($event: any): void {
+    this.eventCustomItemCreating.emit($event);
+  }
+
   private setupDataSource(): void {
     this.dataSource = new DataSource({
       load: (loadOptions) => this.setupDataSourceOnLoad(loadOptions),
@@ -137,20 +157,16 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
       pageSize: this.pageSize,
       requireTotalCount: true,
     });
-
-    if (this.clearValueOnCascade && !!this.value && this.selectBox) {
-      this.selectBox.value = '';
-    }
-
     this.cdr.detectChanges();
   }
 
-  private setupDataSourceOnLoad(loadOptions: LoadOptions): Promise<SelectBoxLoadResult> {
+  private setupDataSourceOnLoad(loadOptions: LoadOptions): Promise<TagBoxLoadResult> {
     return new Promise((resolve) => {
-      if ((loadOptions?.take ?? 0) === 0) {
-        resolve({ data: [], totalCount: 0 });
-        return;
-      }
+      let fromFilter = loadOptions?.filter?.filter((item: any) => typeof item === 'object').map((item: any[]) => {
+        let index = item?.length - 1 >= 0 ? item?.length - 1 : 0;
+        let i = item[index];
+        return i;
+      });
 
       // -- Handle In-Memory Custom DataSource --
       if (this.customDataSource && Array.isArray(this.customDataSource)) {
@@ -167,32 +183,41 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
         const take = loadOptions?.take ?? 50;
         let pagedData = filtered.slice(skip, skip + take);
 
-        if (this.ignoreValue?.length) {
-          pagedData = pagedData.filter((f) => !this.ignoreValue.includes(f[this.valueExpr]));
-        }
-
         resolve({ data: pagedData, totalCount: filtered.length, hasInitialValue: false });
         return;
       }
       // ----------------------------------------
 
+      if (!this.service) {
+        console.warn('CnxTagBox: TAGBOX_DATA_PROVIDER is not provided.');
+        resolve({ data: [], totalCount: 0 });
+        return;
+      }
+
       this.service
-        .getService(this.selectBoxKey, {
-          key: this.value,
-          cascadeBy: this.cascadeBy,
-          loadOptions: { ...loadOptions } as LoadOptions,
-        } as SelectBoxParam)
+        .getService(this.tagBoxKey, {
+          key: (fromFilter?.length ?? 0) > 0 ? fromFilter : [],
+          cascadeBy: this.cascadeBy ? { ...this.cascadeBy } : undefined, // pass cascade obj safely
+          loadOptions: {
+            ...loadOptions,
+            searchValue: loadOptions.searchValue,
+            take: this.pageSize,
+          } as LoadOptions,
+        } as TagBoxParam)
         .subscribe((result) => {
-          if (this.ignoreValue?.length) {
-            result.data = result.data.filter((f) => !this.ignoreValue.includes(f.value));
-          }
           this.hasInitialValue = result.hasInitialValue ?? false;
+
+          if (this.hasInitialValue && this.tagBox) {
+            let all = new Set(result.data.map((x: TagBoxViewModel) => x.value));
+            this.tagBox.value = this.value.filter((x) => all.has(x));
+          }
+
           resolve(result);
         });
     });
   }
 
-  private setupDataSourceByKey(key: any): Promise<any> {
+  private setupDataSourceByKey(key: any | string | number): Promise<any> {
     return new Promise((resolve) => {
       if (!key) {
         resolve([]);
@@ -201,18 +226,24 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
 
       // -- Handle In-Memory Custom DataSource --
       if (this.customDataSource && Array.isArray(this.customDataSource)) {
-        const found = this.customDataSource.filter((item) => item[this.valueExpr] === key);
+        // TagBox byKey usually receives an array of keys
+        let keys = Array.isArray(key) ? key : [key];
+        const found = this.customDataSource.filter((item) => keys.includes(item[this.valueExpr]));
         resolve(found);
         return;
       }
       // ----------------------------------------
 
+      if (!this.service) {
+        resolve([]);
+        return;
+      }
+
       this.service
-        .getService(this.selectBoxKey, {
+        .getService(this.tagBoxKey, {
           isByKey: true,
-          key,
-          cascadeBy: this.cascadeBy,
-        } as SelectBoxParam)
+          key: key,
+        } as TagBoxParam)
         .subscribe((result) => resolve(result.data));
     });
   }

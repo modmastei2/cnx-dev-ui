@@ -1,0 +1,23 @@
+<dx-date-box
+  #dateBox
+  [id]="id"
+  [name]="name"
+  [width]="width"
+  [placeholder]="placeholder"
+  [min]="minDate"
+  [max]="maxDate"
+  [displayFormat]="format"
+  [disabledDates]="disabledDates"
+  [disabled]="disabled"
+  [calendarOptions]="calendarOptions"
+  [value]="value"
+  (onValueChanged)="onValueChanged($event)"
+  (onEnterKey)="onEnterKey()"
+  (isValidChange)="isValidChanged($event)"
+>
+  <div *dxTemplate="let cell of 'cell'">
+    <div [ngClass]="getClassHolidayCell(cell)">
+      {{ cell.text }}
+    </div>
+  </div>
+</dx-date-box>

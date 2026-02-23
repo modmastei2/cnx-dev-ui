@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { SelectBoxKey, SelectBoxLoadResult, SelectBoxParam } from '../models/select-box.model';
+import { SelectBoxKey, SelectBoxLoadResult, SelectBoxParam } from '../models/cnx-select-box.model';
 
 /**
  * Interface ที่ Consumer App ต้อง implement เพื่อให้ SelectBoxComponent ดึงข้อมูลได้

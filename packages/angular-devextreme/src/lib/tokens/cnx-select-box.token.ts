@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { SelectBoxDataProvider } from '../interfaces/select-box.interface';
+import { SelectBoxDataProvider } from '../interfaces/cnx-select-box.interface';
 
 /**
  * Injection Token สำหรับ SelectBoxDataProvider
