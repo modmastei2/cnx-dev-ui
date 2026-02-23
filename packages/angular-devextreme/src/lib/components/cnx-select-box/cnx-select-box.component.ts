@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { ValueChangedEvent } from 'devextreme/ui/select_box';
 import DataSource from 'devextreme/data/data_source';
+import { lastValueFrom } from 'rxjs';
 import { LoadOptions } from 'devextreme/data';
 import { DxSelectBoxComponent } from 'devextreme-angular';
 import { SelectBoxDataProvider } from '../../interfaces/cnx-select-box.interface';
@@ -121,7 +122,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
   public hasInitialValue: boolean = false;
 
   public onValueChanged($event: ValueChangedEvent): void {
-    setTimeout(() => this.eventValueChanged.emit($event));
+    this.eventValueChanged.emit($event);
     this.cdr.detectChanges();
   }
 
@@ -145,75 +146,69 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  private setupDataSourceOnLoad(loadOptions: LoadOptions): Promise<SelectBoxLoadResult> {
-    return new Promise((resolve) => {
-      if ((loadOptions?.take ?? 0) === 0) {
-        resolve({ data: [], totalCount: 0 });
-        return;
+  private async setupDataSourceOnLoad(loadOptions: LoadOptions): Promise<SelectBoxLoadResult> {
+    if ((loadOptions?.take ?? 0) === 0) {
+      return { data: [], totalCount: 0 };
+    }
+
+    // -- Handle In-Memory Custom DataSource --
+    if (this.customDataSource && Array.isArray(this.customDataSource)) {
+      let filtered = [...this.customDataSource];
+      if (loadOptions?.searchValue) {
+        const search = loadOptions.searchValue.toString().toLowerCase();
+        filtered = filtered.filter(
+          (item) =>
+            (item[this.searchExpr]?.toString() || '').toLowerCase().includes(search) ||
+            (item[this.displayExpr]?.toString() || '').toLowerCase().includes(search)
+        );
+      }
+      const skip = loadOptions?.skip ?? 0;
+      const take = loadOptions?.take ?? 50;
+      let pagedData = filtered.slice(skip, skip + take);
+
+      if (this.ignoreValue?.length) {
+        pagedData = pagedData.filter((f) => !this.ignoreValue.includes(f[this.valueExpr]));
       }
 
-      // -- Handle In-Memory Custom DataSource --
-      if (this.customDataSource && Array.isArray(this.customDataSource)) {
-        let filtered = [...this.customDataSource];
-        if (loadOptions?.searchValue) {
-          const search = loadOptions.searchValue.toString().toLowerCase();
-          filtered = filtered.filter(
-            (item) =>
-              (item[this.searchExpr]?.toString() || '').toLowerCase().includes(search) ||
-              (item[this.displayExpr]?.toString() || '').toLowerCase().includes(search)
-          );
-        }
-        const skip = loadOptions?.skip ?? 0;
-        const take = loadOptions?.take ?? 50;
-        let pagedData = filtered.slice(skip, skip + take);
+      return { data: pagedData, totalCount: filtered.length, hasInitialValue: false };
+    }
+    // ----------------------------------------
 
-        if (this.ignoreValue?.length) {
-          pagedData = pagedData.filter((f) => !this.ignoreValue.includes(f[this.valueExpr]));
-        }
+    const result = await lastValueFrom(
+      this.service.getService(this.selectBoxKey, {
+        key: this.value,
+        cascadeBy: this.cascadeBy,
+        loadOptions: { ...loadOptions } as LoadOptions,
+      } as SelectBoxParam)
+    );
 
-        resolve({ data: pagedData, totalCount: filtered.length, hasInitialValue: false });
-        return;
-      }
-      // ----------------------------------------
-
-      this.service
-        .getService(this.selectBoxKey, {
-          key: this.value,
-          cascadeBy: this.cascadeBy,
-          loadOptions: { ...loadOptions } as LoadOptions,
-        } as SelectBoxParam)
-        .subscribe((result) => {
-          if (this.ignoreValue?.length) {
-            result.data = result.data.filter((f) => !this.ignoreValue.includes(f.value));
-          }
-          this.hasInitialValue = result.hasInitialValue ?? false;
-          resolve(result);
-        });
-    });
+    if (this.ignoreValue?.length) {
+      result.data = result.data.filter((f) => !this.ignoreValue.includes(f.value));
+    }
+    this.hasInitialValue = result.hasInitialValue ?? false;
+    return result;
   }
 
-  private setupDataSourceByKey(key: any): Promise<any> {
-    return new Promise((resolve) => {
-      if (!key) {
-        resolve([]);
-        return;
-      }
+  private async setupDataSourceByKey(key: any): Promise<any> {
+    if (!key) {
+      return [];
+    }
 
-      // -- Handle In-Memory Custom DataSource --
-      if (this.customDataSource && Array.isArray(this.customDataSource)) {
-        const found = this.customDataSource.filter((item) => item[this.valueExpr] === key);
-        resolve(found);
-        return;
-      }
-      // ----------------------------------------
+    // -- Handle In-Memory Custom DataSource --
+    if (this.customDataSource && Array.isArray(this.customDataSource)) {
+      const found = this.customDataSource.filter((item) => item[this.valueExpr] === key);
+      return found;
+    }
+    // ----------------------------------------
 
-      this.service
-        .getService(this.selectBoxKey, {
-          isByKey: true,
-          key,
-          cascadeBy: this.cascadeBy,
-        } as SelectBoxParam)
-        .subscribe((result) => resolve(result.data));
-    });
+    const result = await lastValueFrom(
+      this.service.getService(this.selectBoxKey, {
+        isByKey: true,
+        key,
+        cascadeBy: this.cascadeBy,
+      } as SelectBoxParam)
+    );
+
+    return result.data;
   }
 }

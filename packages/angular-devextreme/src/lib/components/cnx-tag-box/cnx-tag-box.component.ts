@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { DxTagBoxComponent } from 'devextreme-angular';
 import DataSource from 'devextreme/data/data_source';
+import { lastValueFrom } from 'rxjs';
 import { ValueChangedEvent } from 'devextreme/ui/tag_box';
 import { LoadOptions } from 'devextreme/data';
 import { TagBoxKey, TagBoxParam, TagBoxLoadResult, TagBoxViewModel } from '../../models/cnx-tag-box.model';
@@ -123,6 +124,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
 
   @Input('dropdownWidth') public dropdownWidth!: string | number;
   @Input('maxLength') public maxLength: number = 0;
+  @Input('maxDisplayedTags') public maxDisplayedTags: number = null as any;
   @Input('disabled') public disabled: boolean = false;
   @Input('cascadeBy') public cascadeBy: any;
   @Input('tagBoxKey') public tagBoxKey: TagBoxKey | null | undefined = null;
@@ -135,7 +137,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
   public hasInitialValue: boolean = false;
 
   public onValueChanged($event: ValueChangedEvent): void {
-    setTimeout(() => this.eventValueChanged.emit($event));
+    this.eventValueChanged.emit($event);
     this.cdr.detectChanges();
   }
 
@@ -154,91 +156,84 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  private setupDataSourceOnLoad(loadOptions: LoadOptions): Promise<TagBoxLoadResult> {
-    return new Promise((resolve) => {
-      let fromFilter = loadOptions?.filter?.filter((item: any) => typeof item === 'object').map((item: any[]) => {
-        let index = item?.length - 1 >= 0 ? item?.length - 1 : 0;
-        let i = item[index];
-        return i;
-      });
-
-      // -- Handle In-Memory Custom DataSource --
-      if (this.customDataSource && Array.isArray(this.customDataSource)) {
-        let filtered = [...this.customDataSource];
-        if (loadOptions?.searchValue) {
-          const search = loadOptions.searchValue.toString().toLowerCase();
-          filtered = filtered.filter(
-            (item) =>
-              (item[this.searchExpr]?.toString() || '').toLowerCase().includes(search) ||
-              (item[this.displayExpr]?.toString() || '').toLowerCase().includes(search)
-          );
-        }
-        const skip = loadOptions?.skip ?? 0;
-        const take = loadOptions?.take ?? 50;
-        let pagedData = filtered.slice(skip, skip + take);
-
-        resolve({ data: pagedData, totalCount: filtered.length, hasInitialValue: false });
-        return;
-      }
-      // ----------------------------------------
-
-      if (!this.service) {
-        console.warn('CnxTagBox: TAGBOX_DATA_PROVIDER is not provided.');
-        resolve({ data: [], totalCount: 0 });
-        return;
-      }
-
-      this.service
-        .getService(this.tagBoxKey, {
-          key: (fromFilter?.length ?? 0) > 0 ? fromFilter : [],
-          cascadeBy: this.cascadeBy ? { ...this.cascadeBy } : undefined, // pass cascade obj safely
-          loadOptions: {
-            ...loadOptions,
-            searchValue: loadOptions.searchValue,
-            take: this.pageSize,
-          } as LoadOptions,
-        } as TagBoxParam)
-        .subscribe((result) => {
-          this.hasInitialValue = result.hasInitialValue ?? false;
-
-          if (this.hasInitialValue && this.tagBox) {
-            let all = new Set(result.data.map((x: TagBoxViewModel) => x.value));
-            this.tagBox.value = this.value.filter((x) => all.has(x));
-          }
-
-          resolve(result);
-        });
+  private async setupDataSourceOnLoad(loadOptions: LoadOptions): Promise<TagBoxLoadResult> {
+    let fromFilter = loadOptions?.filter?.filter((item: any) => typeof item === 'object').map((item: any[]) => {
+      let index = item?.length - 1 >= 0 ? item?.length - 1 : 0;
+      let i = item[index];
+      return i;
     });
+
+    // -- Handle In-Memory Custom DataSource --
+    if (this.customDataSource && Array.isArray(this.customDataSource)) {
+      let filtered = [...this.customDataSource];
+      if (loadOptions?.searchValue) {
+        const search = loadOptions.searchValue.toString().toLowerCase();
+        filtered = filtered.filter(
+          (item) =>
+            (item[this.searchExpr]?.toString() || '').toLowerCase().includes(search) ||
+            (item[this.displayExpr]?.toString() || '').toLowerCase().includes(search)
+        );
+      }
+      const skip = loadOptions?.skip ?? 0;
+      const take = loadOptions?.take ?? 50;
+      let pagedData = filtered.slice(skip, skip + take);
+
+      return { data: pagedData, totalCount: filtered.length, hasInitialValue: false };
+    }
+    // ----------------------------------------
+
+    if (!this.service) {
+      console.warn('CnxTagBox: TAGBOX_DATA_PROVIDER is not provided.');
+      return { data: [], totalCount: 0 };
+    }
+
+    const result = await lastValueFrom(
+      this.service.getService(this.tagBoxKey, {
+        key: (fromFilter?.length ?? 0) > 0 ? fromFilter : [],
+        cascadeBy: this.cascadeBy ? { ...this.cascadeBy } : undefined,
+        loadOptions: {
+          ...loadOptions,
+          searchValue: loadOptions.searchValue,
+          take: this.pageSize,
+        } as LoadOptions,
+      } as TagBoxParam)
+    );
+
+    this.hasInitialValue = result.hasInitialValue ?? false;
+
+    if (this.hasInitialValue && this.tagBox) {
+      let all = new Set(result.data.map((x: TagBoxViewModel) => x.value));
+      this.tagBox.value = this.value.filter((x) => all.has(x));
+    }
+
+    return result;
   }
 
-  private setupDataSourceByKey(key: any | string | number): Promise<any> {
-    return new Promise((resolve) => {
-      if (!key) {
-        resolve([]);
-        return;
-      }
+  private async setupDataSourceByKey(key: any | string | number): Promise<any> {
+    if (!key) {
+      return [];
+    }
 
-      // -- Handle In-Memory Custom DataSource --
-      if (this.customDataSource && Array.isArray(this.customDataSource)) {
-        // TagBox byKey usually receives an array of keys
-        let keys = Array.isArray(key) ? key : [key];
-        const found = this.customDataSource.filter((item) => keys.includes(item[this.valueExpr]));
-        resolve(found);
-        return;
-      }
-      // ----------------------------------------
+    // -- Handle In-Memory Custom DataSource --
+    if (this.customDataSource && Array.isArray(this.customDataSource)) {
+      // TagBox byKey usually receives an array of keys
+      let keys = Array.isArray(key) ? key : [key];
+      const found = this.customDataSource.filter((item) => keys.includes(item[this.valueExpr]));
+      return found;
+    }
+    // ----------------------------------------
 
-      if (!this.service) {
-        resolve([]);
-        return;
-      }
+    if (!this.service) {
+      return [];
+    }
 
-      this.service
-        .getService(this.tagBoxKey, {
-          isByKey: true,
-          key: key,
-        } as TagBoxParam)
-        .subscribe((result) => resolve(result.data));
-    });
+    const result = await lastValueFrom(
+      this.service.getService(this.tagBoxKey, {
+        isByKey: true,
+        key: key,
+      } as TagBoxParam)
+    );
+    
+    return result.data;
   }
 }

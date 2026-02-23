@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnInit,
+  AfterViewInit,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -29,7 +30,8 @@ function formatDate(date: Date | string | null | undefined): string | null {
   styleUrl: './cnx-date-box.component.css',
   standalone: false,
 })
-export class CnxDateBoxComponent implements OnInit {
+export class CnxDateBoxComponent implements OnInit, AfterViewInit {
+  public ngOnInit(): void {}
   @ViewChild('dateBox') public dateBox!: DxDateBoxComponent;
 
   @Input('id') public id: string = '';
@@ -85,12 +87,12 @@ export class CnxDateBoxComponent implements OnInit {
     return isHoliday ? 'holiday-cell !rounded' : '';
   }
 
-  public ngOnInit(): void {
+  public ngAfterViewInit(): void {
     if (!this.value && !this.disabled && this.autoDefault) {
       setTimeout(() => {
-        const todayStr = formatDate(new Date());
-        this.onValueChanged({ value: todayStr } as any);
-        this.cdr.detectChanges();
+        if (this.dateBox?.instance) {
+          this.dateBox.instance.option('value', new Date());
+        }
       });
     }
   }
@@ -128,12 +130,8 @@ export class CnxDateBoxComponent implements OnInit {
   }
 
   public isValidChanged($event: boolean): void {
-    if (!$event) {
-      setTimeout(() => {
-        if (this.dateBox && this.dateBox.instance) {
-          this.dateBox.instance.reset();
-        }
-      });
+    if (!$event && this.dateBox?.instance) {
+      this.dateBox.instance.option('value', undefined);
     }
   }
 

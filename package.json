@@ -43,7 +43,7 @@
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
     "jsdom": "^27.1.0",
-    "ng-packagr": "^21.1.0",
+    "ng-packagr": "21.1.0",
     "nx": "22.5.1",
     "prettier": "~3.6.2",
     "tslib": "^2.3.0",
