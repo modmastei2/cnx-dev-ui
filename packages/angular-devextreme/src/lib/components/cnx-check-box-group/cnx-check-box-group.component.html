@@ -1,0 +1,24 @@
+<div class="cnx-check-box-group" [class.direction-row]="direction === 'row'">
+  @for (item of dataSource; track $index) {
+    <div class="check-box-item">
+      <dx-check-box
+        #checkBox
+        [id]="'cnx_cbg_' + id + '_' + $index + '_' + item.value"
+        [name]="'cnx_cbg_' + name + '_' + $index + '_' + item.value"
+        [(value)]="item.checked"
+        [iconSize]="13"
+        [disabled]="item.disabled || false || disabled"
+        (onValueChanged)="onValueChanged($event, item)"
+      ></dx-check-box>
+      @if (!!item.text) {
+        <span
+          class="check-box-label"
+          [class.clickable]="!item.disabled && !disabled"
+          [class.muted]="item.disabled || disabled"
+          [innerText]="item.text"
+          (click)="onClickLabelCheckBox(checkBox)"
+        ></span>
+      }
+    </div>
+  }
+</div>
