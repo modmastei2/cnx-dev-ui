@@ -126,11 +126,9 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
   @Input('disabled') public disabled: boolean = false;
   @Input('cascadeBy') public cascadeBy: any;
   @Input('tagBoxKey') public tagBoxKey: TagBoxKey | null | undefined = null;
-  @Input('acceptCustomValue') public acceptCustomValue: boolean = false;
 
   @Output('onValueChanged') public eventValueChanged = new EventEmitter<any>();
   @Output('onEnterKey') public eventEnterKey = new EventEmitter<any>();
-  @Output('onCustomItemCreating') public eventCustomItemCreating = new EventEmitter<any>();
 
   private paginate: boolean = true;
   private pageSize: number = 50;
@@ -143,10 +141,6 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
 
   public onEnterKey(): void {
     this.eventEnterKey.emit();
-  }
-
-  public onCustomItemCreating($event: any): void {
-    this.eventCustomItemCreating.emit($event);
   }
 
   private setupDataSource(): void {
