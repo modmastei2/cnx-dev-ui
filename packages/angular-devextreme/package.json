@@ -1,6 +1,6 @@
 {
   "name": "@cnx-dev/angular-devextreme",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "CNX Dev - Angular DevExtreme UI Component Library",
   "author": "cnx-dev",
   "license": "UNLICENSED",
@@ -9,7 +9,7 @@
     "url": "git+https://github.com/modmastei2/cnx-dev-ui.git"
   },
   "homepage": "https://github.com/modmastei2/cnx-dev-ui#readme",
-  "readme": "../../README.md",
+  "readme": "README.md",
   "peerDependencies": {
     "@angular/common": "^17.3.0",
     "@angular/core": "^17.3.0",

@@ -10,6 +10,12 @@
 
 ## 📑 สารบัญรวมปัญหา (Table of Contents)
 
+### NPM & Publishing Issues
+
+- [NPM-001: 403 Forbidden - You cannot publish over the previously published versions](#npm-001-403-forbidden---you-cannot-publish-over-the-previously-published-versions)
+
+---
+
 ### Angular Library & Workspace Issues
 
 - [CLI-001: TS-993004 Unable to import pipe DatePipe (ตอนทำ Live-Reload)](#cli-001-ts-993004-unable-to-import-pipe-datepipe-ตอนทำ-live-reload)
@@ -53,20 +59,44 @@
 
 1. **ใน `angular.json`**:
    เพิ่มใน Architect > Build > Options
-   ```json
-   "preserveSymlinks": true
-   ```
+    ```json
+    "preserveSymlinks": true
+    ```
 2. **ใน `tsconfig.json`**:
    เพิ่ม property ใน root ของ compilerOptions และดัก dependency นอกให้หมด:
-   ```json
-   "preserveSymlinks": true,
-   "paths": {
-      "rxjs": ["./node_modules/rxjs"],
-      "devextreme": ["./node_modules/devextreme"],
-      "devextreme-angular": ["./node_modules/devextreme-angular"]
-   }
-   ```
-   _หมายเหตุ: บางกรณี (เช่น Angular V17 Application Builder ใหม่) ถ้าวิธีนี้ไม่ได้ผล อาจจะต้องเลิกทำ Path mapping แล้ว Build Library ผ่าน npm script ให้เสร็จก่อนใช้งานจริง_
+    ```json
+    "preserveSymlinks": true,
+    "paths": {
+       "rxjs": ["./node_modules/rxjs"],
+       "devextreme": ["./node_modules/devextreme"],
+       "devextreme-angular": ["./node_modules/devextreme-angular"]
+    }
+    ```
+    _หมายเหตุ: บางกรณี (เช่น Angular V17 Application Builder ใหม่) ถ้าวิธีนี้ไม่ได้ผล อาจจะต้องเลิกทำ Path mapping แล้ว Build Library ผ่าน npm script ให้เสร็จก่อนใช้งานจริง_
+
+---
+
+## 🛑 หมวดหมู่: NPM & Publishing Issues
+
+### NPM-001: 403 Forbidden - You cannot publish over the previously published versions
+
+**อาการ (Symptoms):**
+เมื่อพยายามรันคำสั่ง `npm publish` (หรือทำงานผ่าน GitHub Actions) จะพบ Error พ่นออกมาประมาณนี้:
+
+```
+npm error 403 403 Forbidden - PUT https://registry.npmjs.org/... - You cannot publish over the previously published versions: x.x.x.
+```
+
+**สาเหตุ (Root Cause):**
+NPM มีกฎหมายเหล็กเรื่อง **Immutability** คือเลขเวอร์ชันใดๆ ที่เคยถูก Publish ขึ้นไปแล้ว แม้จะถูกลบทิ้ง (Unpublish) ออกจากหน้าเว็บไปแล้วก็ตาม จะ**ไม่สามารถนำเลขนั้นกลับมา Publish ทับได้อีกตลอดกาล** เพื่อป้องกัน Supply Chain Attack และรักษาโค้ดให้สม่ำเสมอ
+
+**วิธีแก้ (Solution):**
+
+1. เปิดไฟล์ `package.json` ของ Library (เช่น `packages/angular-devextreme/package.json`)
+2. ทำการอัปเดตเวอร์ชัน (Version Bump) ให้เป็นเลขใหม่ที่ไม่เคยใช้มาก่อน เช่น จาก `"1.0.0"` เป็น `"1.0.1"`
+3. กด Commit โค้ดที่แก้
+4. สร้าง Git Tag ตัวใหม่ (เช่น `v1.0.1`) แทนที่อันเก่า แล้ว Push ขึ้น Git ใหม่
+5. ปล่อยให้ Action ทำงาน หรือรันคำสั่งขยับเวอร์ชันใหม่ขึ้น NPM ได้เลย
 
 ---
 
