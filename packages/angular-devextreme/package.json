@@ -1,12 +1,12 @@
 {
   "name": "@cnx-dev/angular-devextreme",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CNX Dev - Angular DevExtreme UI Component Library",
   "author": "cnx-dev",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/modmastei2/cnx-dev-ui"
+    "url": "git+https://github.com/modmastei2/cnx-dev-ui.git"
   },
   "homepage": "https://github.com/modmastei2/cnx-dev-ui#readme",
   "readme": "README.md",
