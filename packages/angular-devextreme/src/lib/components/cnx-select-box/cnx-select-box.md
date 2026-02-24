@@ -25,11 +25,11 @@ import { CnxSelectBoxModule } from '@cnx-dev/angular-devextreme';
 import { AppSelectBoxService } from './services/app-select-box.service';
 
 @NgModule({
-  imports: [
-    // 1. นำเข้า CnxSelectBoxModule พร้อมกำหนด Service ด้วย forRoot()
-    // (ระบบจะทำการ Export DxSelectBoxModule & DxTemplateModule ให้ในตัวแล้ว)
-    CnxSelectBoxModule.forRoot(AppSelectBoxService),
-  ],
+    imports: [
+        // 1. นำเข้า CnxSelectBoxModule พร้อมกำหนด Service ด้วย forRoot()
+        // (ระบบจะทำการ Export DxSelectBoxModule & DxTemplateModule ให้ในตัวแล้ว)
+        CnxSelectBoxModule.forRoot(AppSelectBoxService),
+    ],
 })
 export class AppModule {}
 ```
@@ -47,13 +47,13 @@ import { SelectBoxDataProvider, SelectBoxKey, SelectBoxParam, SelectBoxLoadResul
 
 @Injectable()
 export class AppSelectBoxService implements SelectBoxDataProvider {
-  getService(key: SelectBoxKey, param: SelectBoxParam): Observable<SelectBoxLoadResult> {
-    if (key === 'bank') {
-      const data = [{ text: 'ธนาคารกรุงเทพ', value: 'BBL', dropdownText: 'BBL - ธนาคารกรุงเทพ' }];
-      return of({ data: data, totalCount: data.length, hasInitialValue: false });
+    getService(key: SelectBoxKey, param: SelectBoxParam): Observable<SelectBoxLoadResult> {
+        if (key === 'bank') {
+            const data = [{ text: 'ธนาคารกรุงเทพ', value: 'BBL', dropdownText: 'BBL - ธนาคารกรุงเทพ' }];
+            return of({ data: data, totalCount: data.length, hasInitialValue: false });
+        }
+        return of(new SelectBoxLoadResult());
     }
-    return of(new SelectBoxLoadResult());
-  }
 }
 ```
 
@@ -67,30 +67,30 @@ import { SelectBoxDataProvider, SelectBoxKey, SelectBoxParam, SelectBoxLoadResul
 
 @Injectable()
 export class AppSelectBoxService implements SelectBoxDataProvider {
-  // Method หลัก แค่เช็คว่ามีค่าส่งมาหรือไม่ แล้วส่งต่อให้ Method ตามชื่อ Key
-  public getService(selectBoxKey: SelectBoxKey, param: SelectBoxParam): Observable<SelectBoxLoadResult> {
-    if (!selectBoxKey) return of(new SelectBoxLoadResult());
+    // Method หลัก แค่เช็คว่ามีค่าส่งมาหรือไม่ แล้วส่งต่อให้ Method ตามชื่อ Key
+    public getService(selectBoxKey: SelectBoxKey, param: SelectBoxParam): Observable<SelectBoxLoadResult> {
+        if (!selectBoxKey) return of(new SelectBoxLoadResult());
 
-    // เรียกใช้งาน Method แบบ Dynamic ด้วยวงเล็บเหลี่ยม (this['bank'])
-    const method = (this as any)[selectBoxKey as string];
-    if (typeof method === 'function') {
-      return method.call(this, param);
+        // เรียกใช้งาน Method แบบ Dynamic ด้วยวงเล็บเหลี่ยม (this['bank'])
+        const method = (this as any)[selectBoxKey as string];
+        if (typeof method === 'function') {
+            return method.call(this, param);
+        }
+
+        console.warn(`ไม่มี Endpoint สำหรับดึงข้อมูล SelectBoxKey: ${selectBoxKey}`);
+        return of(new SelectBoxLoadResult());
     }
 
-    console.warn(`ไม่มี Endpoint สำหรับดึงข้อมูล SelectBoxKey: ${selectBoxKey}`);
-    return of(new SelectBoxLoadResult());
-  }
+    // แยก Method รอรับตาม selectBoxKey ได้เลย
+    private bank(param: SelectBoxParam): Observable<SelectBoxLoadResult> {
+        const data = [{ text: 'ธนาคารกรุงเทพ', value: 'BBL', dropdownText: 'BBL - ธนาคารกรุงเทพ' }];
+        return of({ data: data, totalCount: data.length });
+    }
 
-  // แยก Method รอรับตาม selectBoxKey ได้เลย
-  private bank(param: SelectBoxParam): Observable<SelectBoxLoadResult> {
-    const data = [{ text: 'ธนาคารกรุงเทพ', value: 'BBL', dropdownText: 'BBL - ธนาคารกรุงเทพ' }];
-    return of({ data: data, totalCount: data.length });
-  }
-
-  private department(param: SelectBoxParam): Observable<SelectBoxLoadResult> {
-    // โค้ดดึงข้อมูลแผนก
-    return of({ data: [], totalCount: 0 });
-  }
+    private department(param: SelectBoxParam): Observable<SelectBoxLoadResult> {
+        // โค้ดดึงข้อมูลแผนก
+        return of({ data: [], totalCount: 0 });
+    }
 }
 ```
 
@@ -115,13 +115,13 @@ export class AppSelectBoxService implements SelectBoxDataProvider {
 
 ```typescript
 declare module '@cnx-dev/angular-devextreme' {
-  // ใส่ชื่อ Key ที่มีในระบบคุณทั้งหมดตรงนี้
-  export interface ModuleSelectBoxKeys {
-    bank: any;
-    department: any;
-    currency: any;
-    // ...
-  }
+    // ใส่ชื่อ Key ที่มีในระบบคุณทั้งหมดตรงนี้
+    export interface ModuleSelectBoxKeys {
+        bank: any;
+        department: any;
+        currency: any;
+        // ...
+    }
 }
 ```
 
@@ -131,18 +131,27 @@ declare module '@cnx-dev/angular-devextreme' {
 
 ### Inputs (`@Input`)
 
-| Property           | Type               | Default     | Description                                                                     |
-| :----------------- | :----------------- | :---------- | :------------------------------------------------------------------------------ |
-| `selectBoxKey`     | `SelectBoxKey`     | `undefined` | **(บังคับ)** Key ที่ใช้ระบุประเภทข้อมูลสำหรับส่งให้ Data Provider เช่น `'bank'` |
-| `customDataSource` | `any`              | `undefined` | โยน Array หรือ DataSource ให้ทำงานตรงๆ (ถ้าใส่ค่านี้ จะข้ามการทำงานของ Service) |
-| `value`            | `any`              | `null`      | ค่าที่ถูกเลือกตั้งต้น (NgModel ภายนอก)                                          |
-| `placeholder`      | `string`           | `''`        | ข้อความแสดงเมื่อยังไม่มีการเลือก                                                |
-| `disabled`         | `boolean`          | `false`     | ปิดการใช้งานฟิลด์                                                               |
-| `cascadeBy`        | `any`              | `undefined` | ค่า Parent ที่ใช้กรองข้อมูลลูก (เช่น ส่ง id ธนาคารไปให้ Data Provider)          |
-| `ignoreValue`      | `string[]`         | `[]`        | รายการของ `value` ที่ต้องการซ่อนไม่ให้แสดงในตัวเลือกชั่วคราว                    |
-| `width`            | `string \| number` | `undefined` | ความกว้างของกล่อง Input                                                         |
-| `dropdownWidth`    | `string \| number` | `undefined` | ความกว้างของ Dropdown ตอนกดกางออก                                               |
-| `showClearButton`  | `boolean`          | `true`      | แสดงปุ่มลบ (กากบาท) ท้ายกล่องหรือไม่                                            |
+| Property           | Type               | Default              | Description                                                                     |
+| :----------------- | :----------------- | :------------------- | :------------------------------------------------------------------------------ |
+| `selectBoxKey`     | `SelectBoxKey`     | `undefined`          | Key ที่ใช้ระบุประเภทข้อมูลสำหรับส่งให้ Data Provider เช่น `'bank'`              |
+| `id`               | `string`           | `''`                 | **(บังคับ)** ID สำหรับอ้างอิงจุดประสงค์เฉพาะ                                    |
+| `name`             | `string`           | `''`                 | **(บังคับ)** Name สำหรับ form binding                                           |
+| `value`            | `string \| number` | `null`               | ค่าที่ถูกเลือกตั้งต้น (NgModel ภายนอก)                                          |
+| `customDataSource` | `any[]`            | `undefined`          | โยน Array หรือ DataSource ให้ทำงานตรงๆ (ถ้าใส่ค่านี้ จะข้ามการทำงานของ Service) |
+| `placeholder`      | `string`           | `'Please select...'` | ข้อความแสดงเมื่อยังไม่มีการเลือก                                                |
+| `disabled`         | `boolean`          | `false`              | ปิดการใช้งานฟิลด์                                                               |
+| `cascadeBy`        | `any`              | `undefined`          | ค่า Parent ที่ใช้กรองข้อมูลลูก (เช่น ส่ง id ธนาคารไปให้ Data Provider)          |
+| `ignoreValue`      | `string[]`         | `[]`                 | รายการของ `value` ที่ต้องการซ่อนไม่ให้แสดงในตัวเลือกชั่วคราว                    |
+| `displayExpr`      | `string`           | `'text'`             | ชื่อฟิลด์ใน Object สำหรับโชว์ข้อความที่ถูกเลือก                                 |
+| `valueExpr`        | `string`           | `'value'`            | ชื่อฟิลด์ใน Object สำหรับเป็นค่า value ตัวแทน                                   |
+| `searchExpr`       | `string`           | `'dropdownText'`     | Field ที่ใช้ค้นหาข้อความ                                                        |
+| `dropdownExpr`     | `string`           | `'dropdownText'`     | Field ที่นำมาแสดงใน List Dropdown                                               |
+| `searchEnabled`    | `boolean`          | `true`               | เปิดปิดการพิมพ์ค้นหา                                                            |
+| `searchTimeout`    | `number`           | `500`                | หูหน่วงเวลาค้นหา (Debounce) (มิลลิวินาที)                                       |
+| `showClearButton`  | `boolean`          | `true`               | แสดงปุ่มลบ (กากบาท) ท้ายกล่องหรือไม่                                            |
+| `width`            | `string \| number` | `'100%'`             | ความกว้างของกล่อง Input                                                         |
+| `dropdownWidth`    | `string \| number` | `undefined`          | ความกว้างของ Dropdown ตอนกดกางออก                                               |
+| `maxLength`        | `number`           | `0`                  | จำกัดความยาวตัวอักษรพิมพ์ค้นหาสูงสุด                                            |
 
 ### Outputs (`@Output`)
 

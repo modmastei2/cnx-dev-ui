@@ -58,14 +58,38 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
     @Input('ignoreValue')
     public ignoreValue: string[] = [];
 
-    @Input('dataSource')
-    set dataSource(items: CheckBoxViewModel[]) {
+    @Input('displayExpr')
+    set displayExpr(val: string | null) {
+        const _val = val?.toString() || '';
+        if (_val && _val !== this.displayExprOption)
+            this.displayExprOption = _val;
+    }
+    get displayExpr(): string {
+        return this.displayExprOption;
+    }
+    public displayExprOption: string = 'text';
+
+    @Input('valueExpr')
+    set valueExpr(val: string | null) {
+        const _val = val?.toString() || '';
+        if (_val && _val !== this.valueExprOption) this.valueExprOption = _val;
+    }
+    get valueExpr(): string {
+        return this.valueExprOption;
+    }
+    public valueExprOption: string = 'value';
+
+    @Input('customDataSource')
+    public customDataSource?: CheckBoxViewModel[] | any[];
+
+    // @Input('dataSource')
+    set dataSource(items: CheckBoxViewModel[] | any[]) {
         this._dataSource = items.map((item) => ({ ...item }));
     }
-    get dataSource(): CheckBoxViewModel[] {
+    get dataSource(): CheckBoxViewModel[] | any[] {
         return this._dataSource;
     }
-    private _dataSource: CheckBoxViewModel[] = [];
+    private _dataSource: CheckBoxViewModel[] | any[] = [];
 
     @Output('onValueChanged')
     public eventValueChanged = new EventEmitter<{ value: string[] }>();
@@ -95,16 +119,22 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
                 await this.setupDataSource();
             }
         }
+        const customChange = changes['customDataSource'];
+        if (customChange && !customChange.firstChange) {
+            await this.setupDataSource();
+        }
     }
 
     public onValueChanged(
         $event: ValueChangedEvent,
-        item: CheckBoxViewModel,
+        item: CheckBoxViewModel | any,
     ): void {
         if (this.mode === 'single') {
             if ($event.value === true) {
                 this.dataSource.forEach((i) => {
-                    if (i.value !== item.value) {
+                    if (
+                        i[this.valueExprOption] !== item[this.valueExprOption]
+                    ) {
                         i.checked = false;
                     }
                 });
@@ -114,7 +144,7 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
         item.checked = $event.value;
         const value = this.dataSource
             .filter((i) => i.checked === true)
-            .map((i) => i.value);
+            .map((i) => i[this.valueExprOption]);
 
         this.eventValueChanged.emit({ value });
     }
@@ -126,8 +156,8 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
 
     private async setupDataSource(): Promise<void> {
         // 1. In-memory customDataSource
-        if (this.dataSource.length > 0 && Array.isArray(this.dataSource)) {
-            this.dataSource = this.applyIgnoreValue(this.dataSource);
+        if (this.customDataSource && Array.isArray(this.customDataSource)) {
+            this.dataSource = this.applyIgnoreValue(this.customDataSource);
             this.checkMapValue();
             return;
         }
@@ -140,22 +170,23 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
                 } as CheckBoxParam),
             );
 
-            console.log('result', result);
             this.dataSource = this.applyIgnoreValue(result);
             this.checkMapValue();
         }
     }
 
-    private applyIgnoreValue(items: CheckBoxViewModel[]): CheckBoxViewModel[] {
+    private applyIgnoreValue(items: CheckBoxViewModel[] | any[]): any[] {
         if (!this.ignoreValue?.length) return items;
-        return items.filter((item) => !this.ignoreValue.includes(item.value));
+        return items.filter(
+            (item) => !this.ignoreValue.includes(item[this.valueExprOption]),
+        );
     }
 
     private checkMapValue(): void {
         if (this.dataSource.length > 0) {
             this.dataSource.forEach((item) => {
                 item.checked = this._value
-                    ? this._value.includes(item.value)
+                    ? this._value.includes(item[this.valueExprOption])
                     : false;
             });
             this.cdr.detectChanges();
