@@ -67,6 +67,13 @@ npm run publish:lib
 > cd dist/packages/angular-devextreme
 > npm publish --access public --otp=123456
 > ```
+>
+> **ทางเลือก: การใช้ NPM Token (สำหรับ CI/CD หรือ Automation)**
+> นอกจากการใช้ OTP แล้ว คุณสามารถตั้งค่า Automation Token เพื่อข้ามการขอ OTP ได้ โดยสร้างไฟล์ `.npmrc` (หรือรันคำสั่ง) แล้วใส่ Token ที่สร้างจากหน้าเว็บ NPM ดังนี้:
+>
+> ```ini
+> //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+> ```
 
 ---
 

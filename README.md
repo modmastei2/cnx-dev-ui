@@ -6,11 +6,17 @@
 
 ### Angular DevExtreme (`@cnx-dev/angular-devextreme`)
 
-- [Select Box (Dropdown)](docs/select-box.md) - Dropdown สมาร์ทที่รองรับการโหลดข้อมูลแบบ Dynamic, Cascade, และ Pagination
+- [Select Box (Dropdown)](packages/angular-devextreme/src/lib/components/cnx-select-box/cnx-select-box.md) - Dropdown สมาร์ทที่รองรับการโหลดข้อมูลแบบ Dynamic, Cascade, และ Pagination
+- [Tag Box (Multiple Selection)](packages/angular-devextreme/src/lib/components/cnx-tag-box/cnx-tag-box.md) - Dropdown เลือกได้หลายรายการแบบ Dynamic (การป้อนข้อมูลอิงโครงสร้างเดียวกับ Select Box)
+- [Date Box (DatePicker)](packages/angular-devextreme/src/lib/components/cnx-date-box/cnx-date-box.md) - ช่องเลือกวันที่ ที่สามารถตั้งคาวันหยุด/Highlight บนปฏิทิน และจำกัดขอบเขตการเลือก (min/max) ได้
+- [Number Box (NumberInput)](packages/angular-devextreme/src/lib/components/cnx-number-box/cnx-number-box.md) - ช่องกรอกตัวเลขครอบจักรวาล ที่คุมหลักทศนิยม คุมเป็นค่าบวก/เปอร์เซ็นต์ ได้โดยอัตโนมัติ
+- _[Check Box Group (In Progress)](packages/angular-devextreme/src/lib/components/cnx-check-box-group/cnx-check-box-group.md)_
+- _[Radio Group (In Progress)](packages/angular-devextreme/src/lib/components/cnx-radio-group/cnx-radio-group.md)_
 
 ### 🛠️ คู่มือสำหรับนักพัฒนา (Developer Guides)
 
 - [How to Publish Library](docs/publishing.md) - ขั้นตอนการ Build และ Publish แพ็กเกจขึ้น NPM Registry
+- [Troubleshooting Guide](docs/troubleshooting.md) - รวมปัญหาที่พบบ่อย (Errors) และวิธีแก้ไข (พร้อม Template สำหรับเพิ่มปัญหาใหม่ในอนาคต)
 
 ---
 

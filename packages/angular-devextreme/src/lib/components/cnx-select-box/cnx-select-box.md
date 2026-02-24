@@ -21,17 +21,13 @@ Component สำหรับแสดงผล Dropdown ที่ถูกคร
 
 ```typescript
 import { NgModule } from '@angular/core';
-import { DxSelectBoxModule, DxTemplateModule } from 'devextreme-angular';
 import { CnxSelectBoxModule } from '@cnx-dev/angular-devextreme';
 import { AppSelectBoxService } from './services/app-select-box.service';
 
 @NgModule({
   imports: [
-    // 1. ต้อง import DevExtreme module ด้วย
-    DxSelectBoxModule,
-    DxTemplateModule,
-
-    // 2. นำเข้า CnxSelectBoxModule พร้อมกำหนด Service ด้วย forRoot()
+    // 1. นำเข้า CnxSelectBoxModule พร้อมกำหนด Service ด้วย forRoot()
+    // (ระบบจะทำการ Export DxSelectBoxModule & DxTemplateModule ให้ในตัวแล้ว)
     CnxSelectBoxModule.forRoot(AppSelectBoxService),
   ],
 })
