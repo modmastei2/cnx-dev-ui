@@ -45,3 +45,5 @@ Thumbs.db
 
 vitest.config.*.timestamp*
 __screenshots__/
+
+vite.config.*.timestamp*

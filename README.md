@@ -6,6 +6,8 @@
 
 - 📦 **[@cnx-dev/angular-devextreme](packages/angular-devextreme/README.md)**  
   Angular UI Component Library ที่ถูกต่อยอดและปรับแต่งมาจาก DevExtreme เพื่อให้ได้มาตรฐานเดียวกัน ใช้งานง่าย และรองรับ Dependency Injection อย่างสมบูรณ์
+- 📦 **[@cnx-dev/react-devextreme](packages/react-devextreme/README.md)**  
+  React UI Component Library ที่ออกแบบมาคู่ขนานกับเวอร์ชัน Angular (อยู่ในระหว่างการพัฒนา)
 
 ## 🛠️ คู่มือสำหรับโปรเจกต์ (Project Guides)
 

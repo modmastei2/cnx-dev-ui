@@ -1,0 +1,19 @@
+{
+  "name": "@cnx-dev/react-devextreme",
+  "version": "1.0.0",
+  "description": "CNX Dev - React DevExtreme UI Component Library",
+  "author": "cnx-dev",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/modmastei2/cnx-dev-ui.git"
+  },
+  "homepage": "https://github.com/modmastei2/cnx-dev-ui#readme",
+  "readme": "../../README.md",
+  "peerDependencies": {
+"devextreme": ">=23 <26",
+"devextreme-react": ">=23 <26",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}
