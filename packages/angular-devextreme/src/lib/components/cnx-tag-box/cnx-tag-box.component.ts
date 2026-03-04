@@ -110,7 +110,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
     get searchExpr(): string {
         return this.searchExprOption;
     }
-    private searchExprOption: string = 'dropdownText';
+    private searchExprOption: string = 'text';
 
     @Input('dropdownExpr')
     set dropdownExpr(val: string | null) {
@@ -122,7 +122,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
     get dropdownExpr(): string {
         return this.dropdownExprOption;
     }
-    private dropdownExprOption: string = 'dropdownText';
+    private dropdownExprOption: string = 'text';
 
     @Input('searchEnabled') public searchEnabled: boolean = true;
     @Input('searchTimeout') public searchTimeout: number = 500;

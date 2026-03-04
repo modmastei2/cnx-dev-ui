@@ -106,7 +106,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     get searchExpr(): string {
         return this._searchExpr;
     }
-    private _searchExpr: string = 'dropdownText';
+    private _searchExpr: string = 'text';
 
     @Input('dropdownExpr')
     set dropdownExpr(val: string | null) {
@@ -119,7 +119,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     get dropdownExpr(): string {
         return this._dropdownExpr;
     }
-    private _dropdownExpr: string = 'dropdownText';
+    private _dropdownExpr: string = 'text';
 
     @Input('searchEnabled') public searchEnabled: boolean = true;
     @Input('searchTimeout') public searchTimeout: number = 500;
