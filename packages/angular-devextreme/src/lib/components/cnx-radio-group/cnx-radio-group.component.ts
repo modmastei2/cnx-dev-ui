@@ -19,6 +19,7 @@ import { ValueChangedEvent } from 'devextreme/ui/radio_group';
 import { lastValueFrom } from 'rxjs';
 import { RadioGroupDataProvider } from '../../interfaces/cnx-radio-group.interface';
 import { RADIO_GROUP_DATA_PROVIDER } from '../../tokens/cnx-radio-group.token';
+import { CascadeRule } from '../../models/cnx-cascade-value';
 
 @Component({
     selector: 'cnx-radio-group',
@@ -58,6 +59,8 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
         | RadioGroupKey
         | null
         | undefined = null;
+
+    @Input('cascadeRule') public cascadeRule: CascadeRule | CascadeRule[];
     @Input('cascadeBy') public cascadeBy: any;
     @Input('ignoreValue') public ignoreValue: string[] = [];
 
@@ -98,6 +101,19 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
     }
 
     public async ngOnChanges(changes: SimpleChanges): Promise<void> {
+        // ตรวจสอบการเปลี่ยนของ cascadeRule
+        const cascadeRuleChange = changes['cascadeRule'];
+        if (cascadeRuleChange && !cascadeRuleChange.firstChange) {
+            const isDiff =
+                JSON.stringify(cascadeRuleChange.currentValue) !==
+                JSON.stringify(cascadeRuleChange.previousValue);
+
+            if (isDiff) {
+                await this.setupDataSource();
+            }
+        }
+
+        // ตรวจสอบการเปลี่ยนของ cascadeBy
         const cascadeChange = changes['cascadeBy'];
         if (cascadeChange && !cascadeChange.firstChange) {
             const isDiff =
@@ -108,6 +124,8 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
                 await this.setupDataSource();
             }
         }
+
+        // ตรวจสอบการเปลี่ยนของ customDataSource
         const customChange = changes['customDataSource'];
         if (customChange && !customChange.firstChange) {
             await this.setupDataSource();
@@ -121,7 +139,8 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
     private async setupDataSource(): Promise<void> {
         // 1. In-memory customDataSource
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
-            this.dataSource = this.applyIgnoreValue(this.customDataSource);
+            let filtered = this.applyCascadeRule(this.customDataSource);
+            this.dataSource = this.applyIgnoreValue(filtered);
             this.applyAutoDefault();
             return;
         }
@@ -137,6 +156,41 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
             this.applyAutoDefault();
             return;
         }
+    }
+
+    private applyCascadeRule(items: RadioGroupViewModel[] | any[]): any[] {
+        if (
+            !this.cascadeRule ||
+            this.cascadeBy === undefined ||
+            this.cascadeBy === null
+        ) {
+            return items;
+        }
+
+        const rules = Array.isArray(this.cascadeRule)
+            ? this.cascadeRule
+            : [this.cascadeRule];
+
+        const filtered = items.filter((item) => {
+            return rules.every((rule) => {
+                let parentVal: any;
+
+                if (
+                    typeof this.cascadeBy === 'object' &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy[rule.parentKey];
+                } else if (
+                    this.cascadeBy !== undefined &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy;
+                }
+                return item[rule.childKey] === parentVal;
+            });
+        });
+
+        return filtered;
     }
 
     private applyIgnoreValue(items: RadioGroupViewModel[] | any[]): any[] {

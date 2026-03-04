@@ -14,13 +14,13 @@ import { DxCheckBoxComponent } from 'devextreme-angular';
 import { ValueChangedEvent } from 'devextreme/ui/check_box';
 import { lastValueFrom } from 'rxjs';
 import {
-    CascadeRule,
     CheckBoxKey,
     CheckBoxParam,
     CheckBoxViewModel,
 } from '../../models/cnx-check-box-group.model';
 import { CheckBoxDataProvider } from '../../interfaces/cnx-check-box-group.interface';
 import { CHECKBOX_DATA_PROVIDER } from '../../tokens/cnx-check-box-group.token';
+import { CascadeRule } from '../../models/cnx-cascade-value';
 
 @Component({
     selector: 'cnx-check-box-group',

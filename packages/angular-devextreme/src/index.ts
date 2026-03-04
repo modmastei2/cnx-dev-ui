@@ -25,6 +25,7 @@ export * from './lib/models/cnx-select-box.model';
 export * from './lib/models/cnx-tag-box.model';
 export * from './lib/models/cnx-check-box-group.model';
 export * from './lib/models/cnx-radio-group.model';
+export * from './lib/models/cnx-cascade-value';
 
 // Tokens
 export * from './lib/tokens/cnx-select-box.token';
