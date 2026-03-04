@@ -168,7 +168,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
 
     public onValueChanged($event: ValueChangedEvent): void {
         this.eventValueChanged.emit($event);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck(); // use markForCheck instead of detectChanges to avoid triggering DX event re-entry
     }
 
     public onEnterKey(): void {
@@ -232,9 +232,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
             const result = await lastValueFrom(
                 this.service.getService(this.tagBoxKey, {
                     key: (fromFilter?.length ?? 0) > 0 ? fromFilter : [],
-                    cascadeBy: this.cascadeBy
-                        ? { ...this.cascadeBy }
-                        : undefined,
+                    cascadeBy: this.cascadeBy,
                     loadOptions: {
                         ...loadOptions,
                         searchValue: loadOptions.searchValue,
@@ -246,12 +244,17 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
             result.data = this.applyIgnoreValue(result.data);
             this.hasInitialValue = result.hasInitialValue ?? false;
 
-            if (this.hasInitialValue && this.tagBox) {
-                let all = new Set(
-                    result.data.map((x: TagBoxViewModel) => x.value),
-                );
-                this.tagBox.value = this.value.filter((x) => all.has(x));
-            }
+            // if (this.hasInitialValue && this.tagBox?.instance) {
+            //     let all = new Set(
+            //         result.data.map((x: TagBoxViewModel) => x.value),
+            //     );
+            //     // Use DevExtreme's native API to silently set value — bypasses Angular
+            //     // event emitter so it won't trigger onValueChanged and cause infinite loop
+            //     this.tagBox.instance.option(
+            //         'value',
+            //         this.value.filter((x) => all.has(x)),
+            //     );
+            // }
 
             return result;
         }
