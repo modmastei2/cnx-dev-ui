@@ -24,6 +24,7 @@ import {
 } from '../../models/cnx-tag-box.model';
 import { TagBoxDataProvider } from '../../interfaces/cnx-tag-box.interface';
 import { TAGBOX_DATA_PROVIDER } from '../../tokens/cnx-tag-box.token';
+import { CascadeRule } from '../../models/cnx-cascade-value';
 
 @Component({
     selector: 'cnx-tag-box',
@@ -44,6 +45,16 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
     }
 
     public ngOnChanges(changes: SimpleChanges): void {
+        // ตรวจสอบการเปลี่ยนของ cascadeRule
+        const cascadeRuleChange = changes['cascadeRule'];
+        if (!!cascadeRuleChange && !cascadeRuleChange.firstChange) {
+            const { currentValue, previousValue } = cascadeRuleChange;
+            const isChange =
+                JSON.stringify(currentValue) !== JSON.stringify(previousValue);
+            if (isChange) this.setupDataSource();
+        }
+
+        // ตรวจสอบการเปลี่ยนของ cascadeBy
         const change = changes['cascadeBy'];
         if (!!change && !change.firstChange) {
             const { currentValue, previousValue } = change;
@@ -51,6 +62,8 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
                 JSON.stringify(currentValue) !== JSON.stringify(previousValue);
             if (isChange) this.setupDataSource();
         }
+
+        // ตรวจสอบการเปลี่ยนของ customDataSource
         const customChange = changes['customDataSource'];
         if (!!customChange && !customChange.firstChange) {
             this.setupDataSource();
@@ -138,12 +151,16 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
     @Input('maxLength') public maxLength: number = 0;
     @Input('maxDisplayedTags') public maxDisplayedTags: number = null as any;
     @Input('disabled') public disabled: boolean = false;
+
+    @Input('cascadeRule') public cascadeRule: CascadeRule | CascadeRule[];
     @Input('cascadeBy') public cascadeBy: any;
+
     @Input('tagBoxKey') public tagBoxKey: TagBoxKey | null | undefined = null;
 
     @Output('onValueChanged') public eventValueChanged =
         new EventEmitter<any>();
     @Output('onEnterKey') public eventEnterKey = new EventEmitter<any>();
+    @Input('ignoreValue') public ignoreValue!: string[];
 
     private paginate: boolean = true;
     private pageSize: number = 50;
@@ -183,6 +200,9 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
         // -- Handle In-Memory Custom DataSource --
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
             let filtered = [...this.customDataSource];
+            filtered = this.applyCascadeRule(filtered);
+            filtered = this.applyIgnoreValue(filtered);
+
             if (loadOptions?.searchValue) {
                 const search = loadOptions.searchValue.toString().toLowerCase();
                 filtered = filtered.filter(
@@ -223,6 +243,7 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
                 } as TagBoxParam),
             );
 
+            result.data = this.applyIgnoreValue(result.data);
             this.hasInitialValue = result.hasInitialValue ?? false;
 
             if (this.hasInitialValue && this.tagBox) {
@@ -249,7 +270,12 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
             // TagBox byKey usually receives an array of keys
             let keys = Array.isArray(key) ? key : [key];
-            const found = this.customDataSource.filter((item) =>
+
+            let filtered = [...this.customDataSource];
+            filtered = this.applyCascadeRule(filtered);
+            filtered = this.applyIgnoreValue(filtered);
+
+            const found = filtered.filter((item) =>
                 keys.includes(item[this.valueExpr]),
             );
             return found;
@@ -265,9 +291,57 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
                 } as TagBoxParam),
             );
 
+            result.data = this.applyIgnoreValue(result.data);
             return result.data;
         }
 
         return [];
+    }
+
+    private applyCascadeRule(
+        items: TagBoxViewModel[] | any[],
+    ): TagBoxViewModel[] {
+        if (
+            !this.cascadeRule ||
+            this.cascadeBy === undefined ||
+            this.cascadeBy === null
+        ) {
+            return items;
+        }
+
+        const rules = Array.isArray(this.cascadeRule)
+            ? this.cascadeRule
+            : [this.cascadeRule];
+
+        const filtered = items.filter((item) => {
+            return rules.every((rule) => {
+                let parentVal: any;
+
+                if (
+                    typeof this.cascadeBy === 'object' &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy[rule.parentKey];
+                } else if (
+                    this.cascadeBy !== undefined &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy;
+                }
+                return item[rule.childKey] === parentVal;
+            });
+        });
+
+        return filtered;
+    }
+
+    private applyIgnoreValue(
+        items: TagBoxViewModel[] | any[],
+    ): TagBoxViewModel[] {
+        if (!this.ignoreValue?.length) return items;
+
+        return items.filter(
+            (item) => !this.ignoreValue.includes(item[this.valueExpr]),
+        );
     }
 }

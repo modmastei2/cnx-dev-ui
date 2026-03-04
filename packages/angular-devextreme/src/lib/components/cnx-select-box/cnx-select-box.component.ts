@@ -22,7 +22,9 @@ import {
     SelectBoxKey,
     SelectBoxLoadResult,
     SelectBoxParam,
+    SelectBoxViewModel,
 } from '../../models/cnx-select-box.model';
+import { CascadeRule } from '../../models/cnx-cascade-value';
 
 @Component({
     selector: 'cnx-select-box',
@@ -43,6 +45,16 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     }
 
     public ngOnChanges(changes: SimpleChanges): void {
+        // ตรวจสอบการเปลี่ยนของ cascadeRule
+        const cascadeRuleChange = changes['cascadeRule'];
+        if (!!cascadeRuleChange && !cascadeRuleChange.firstChange) {
+            const { currentValue, previousValue } = cascadeRuleChange;
+            const isChange =
+                JSON.stringify(currentValue) !== JSON.stringify(previousValue);
+            if (isChange) this.setupDataSource();
+        }
+
+        // ตรวจสอบการเปลี่ยนของ cascadeBy
         const change = changes['cascadeBy'];
         if (!!change && !change.firstChange) {
             const { currentValue, previousValue } = change;
@@ -50,6 +62,8 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
                 JSON.stringify(currentValue) !== JSON.stringify(previousValue);
             if (isChange) this.setupDataSource();
         }
+
+        // ตรวจสอบการเปลี่ยนของ customDataSource
         const customChange = changes['customDataSource'];
         if (!!customChange && !customChange.firstChange) {
             this.setupDataSource();
@@ -127,7 +141,10 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     @Input('dropdownWidth') public dropdownWidth!: string | number;
     @Input('maxLength') public maxLength: number = 0;
     @Input('disabled') public disabled: boolean = false;
+
+    @Input('cascadeRule') public cascadeRule: CascadeRule | CascadeRule[];
     @Input('cascadeBy') public cascadeBy: any;
+
     @Input('selectBoxKey') public selectBoxKey:
         | SelectBoxKey
         | null
@@ -178,6 +195,9 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
         // -- Handle In-Memory Custom DataSource --
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
             let filtered = [...this.customDataSource];
+            filtered = this.applyCascadeRule(filtered);
+            filtered = this.applyIgnoreValue(filtered);
+
             if (loadOptions?.searchValue) {
                 const search = loadOptions.searchValue.toString().toLowerCase();
                 filtered = filtered.filter(
@@ -193,12 +213,6 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
             const skip = loadOptions?.skip ?? 0;
             const take = loadOptions?.take ?? 50;
             let pagedData = filtered.slice(skip, skip + take);
-
-            if (this.ignoreValue?.length) {
-                pagedData = pagedData.filter(
-                    (f) => !this.ignoreValue.includes(f[this.valueExpr]),
-                );
-            }
 
             return {
                 data: pagedData,
@@ -218,11 +232,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
                 } as SelectBoxParam),
             );
 
-            if (this.ignoreValue?.length) {
-                result.data = result.data.filter(
-                    (f) => !this.ignoreValue.includes(f.value),
-                );
-            }
+            result.data = this.applyIgnoreValue(result.data);
             this.hasInitialValue = result.hasInitialValue ?? false;
             return result;
         }
@@ -237,7 +247,10 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
 
         // -- Handle In-Memory Custom DataSource --
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
-            const found = this.customDataSource.filter(
+            let filtered = [...this.customDataSource];
+            filtered = this.applyCascadeRule(filtered);
+            filtered = this.applyIgnoreValue(filtered);
+            const found = filtered.filter(
                 (item) => item[this.valueExpr] === key,
             );
             return found;
@@ -254,9 +267,57 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
                 } as SelectBoxParam),
             );
 
+            result.data = this.applyIgnoreValue(result.data);
             return result.data;
         }
 
         return [];
+    }
+
+    private applyCascadeRule(
+        items: SelectBoxViewModel[] | any[],
+    ): SelectBoxViewModel[] {
+        if (
+            !this.cascadeRule ||
+            this.cascadeBy === undefined ||
+            this.cascadeBy === null
+        ) {
+            return items;
+        }
+
+        const rules = Array.isArray(this.cascadeRule)
+            ? this.cascadeRule
+            : [this.cascadeRule];
+
+        const filtered = items.filter((item) => {
+            return rules.every((rule) => {
+                let parentVal: any;
+
+                if (
+                    typeof this.cascadeBy === 'object' &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy[rule.parentKey];
+                } else if (
+                    this.cascadeBy !== undefined &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy;
+                }
+                return item[rule.childKey] === parentVal;
+            });
+        });
+
+        return filtered;
+    }
+
+    private applyIgnoreValue(
+        items: SelectBoxViewModel[] | any[],
+    ): SelectBoxViewModel[] {
+        if (!this.ignoreValue?.length) return items;
+
+        return items.filter(
+            (item) => !this.ignoreValue.includes(item[this.valueExpr]),
+        );
     }
 }
