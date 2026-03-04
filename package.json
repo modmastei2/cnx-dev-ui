@@ -3,12 +3,12 @@
     "version": "0.0.0",
     "license": "MIT",
     "scripts": {
-        "build:lib:angular": "nx build angular-devextreme",
-        "publish:lib:angular": "npm run build:lib:angular && cd dist/packages/angular-devextreme && npm publish --access public",
-        "build:lib:react": "nx build react-devextreme",
-        "publish:lib:react": "npm run build:lib:react && cd dist/packages/react-devextreme && npm publish --access public",
-        "build:lib:react-mui": "nx build react-mui",
-        "publish:lib:react-mui": "npm run build:lib:react-mui && cd dist/packages/react-mui && npm publish --access public",
+        "build:lib:angular": "nx build angular-devextreme --configuration=development",
+        "publish:lib:angular": "nx build angular-devextreme && cd dist/packages/angular-devextreme && npm publish --access public",
+        "build:lib:react": "nx build react-devextreme --configuration=development",
+        "publish:lib:react": "nx build react-devextreme && cd dist/packages/react-devextreme && npm publish --access public",
+        "build:lib:react-mui": "nx build react-mui --configuration=development",
+        "publish:lib:react-mui": "nx build react-mui && cd dist/packages/react-mui && npm publish --access public",
         "build:lib": "npm run build:lib:angular && npm run build:lib:react && npm run build:lib:react-mui"
     },
     "private": true,

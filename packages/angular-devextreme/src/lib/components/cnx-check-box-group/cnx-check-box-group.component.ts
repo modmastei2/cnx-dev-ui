@@ -14,6 +14,7 @@ import { DxCheckBoxComponent } from 'devextreme-angular';
 import { ValueChangedEvent } from 'devextreme/ui/check_box';
 import { lastValueFrom } from 'rxjs';
 import {
+    CascadeRule,
     CheckBoxKey,
     CheckBoxParam,
     CheckBoxViewModel,
@@ -52,9 +53,10 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
 
     @Input('checkBoxKey')
     public checkBoxKey: CheckBoxKey | null | undefined = null;
+    @Input('cascadeRule')
+    public cascadeRule: CascadeRule | CascadeRule[];
     @Input('cascadeBy')
     public cascadeBy: any;
-
     @Input('ignoreValue')
     public ignoreValue: string[] = [];
 
@@ -106,19 +108,36 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
     }
 
     public async ngOnChanges(changes: SimpleChanges): Promise<void> {
+        // ตรวจสอบการเปลี่ยนของ value
         if (changes['value'] && !changes['value'].firstChange) {
             this.checkMapValue();
         }
 
-        const cascadeChange = changes['cascadeBy'];
-        if (cascadeChange && !cascadeChange.firstChange) {
+        // ตรวจสอบการเปลี่ยนของ cascadeRule
+        const cascadeRuleChange = changes['cascadeRule'];
+        if (cascadeRuleChange && !cascadeRuleChange.firstChange) {
             const isDiff =
-                JSON.stringify(cascadeChange.currentValue) !==
-                JSON.stringify(cascadeChange.previousValue);
+                JSON.stringify(cascadeRuleChange.currentValue) !==
+                JSON.stringify(cascadeRuleChange.previousValue);
+
             if (isDiff) {
                 await this.setupDataSource();
             }
         }
+
+        // ตรวจสอบการเปลี่ยนของ cascadeBy
+        const cascadeByChange = changes['cascadeBy'];
+        if (cascadeByChange && !cascadeByChange.firstChange) {
+            const isCascadeByDiff =
+                JSON.stringify(cascadeByChange.currentValue) !==
+                JSON.stringify(cascadeByChange.previousValue);
+
+            if (isCascadeByDiff) {
+                await this.setupDataSource();
+            }
+        }
+
+        // ตรวจสอบการเปลี่ยนของ customDataSource
         const customChange = changes['customDataSource'];
         if (customChange && !customChange.firstChange) {
             await this.setupDataSource();
@@ -157,7 +176,8 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
     private async setupDataSource(): Promise<void> {
         // 1. In-memory customDataSource
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
-            this.dataSource = this.applyIgnoreValue(this.customDataSource);
+            let filtered = this.applyCascading(this.customDataSource);
+            this.dataSource = this.applyIgnoreValue(filtered);
             this.checkMapValue();
             return;
         }
@@ -173,6 +193,41 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
             this.dataSource = this.applyIgnoreValue(result);
             this.checkMapValue();
         }
+    }
+
+    private applyCascading(items: CheckBoxViewModel[] | any[]): any[] {
+        if (
+            !this.cascadeRule ||
+            this.cascadeBy === undefined ||
+            this.cascadeBy === null
+        ) {
+            return items;
+        }
+
+        const rules = Array.isArray(this.cascadeRule)
+            ? this.cascadeRule
+            : [this.cascadeRule];
+
+        const filtered = items.filter((item) => {
+            return rules.every((rule) => {
+                let parentVal: any;
+
+                if (
+                    typeof this.cascadeBy === 'object' &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy[rule.parentKey];
+                } else if (
+                    this.cascadeBy !== undefined &&
+                    this.cascadeBy !== null
+                ) {
+                    parentVal = this.cascadeBy;
+                }
+                return item[rule.childKey] === parentVal;
+            });
+        });
+
+        return filtered;
     }
 
     private applyIgnoreValue(items: CheckBoxViewModel[] | any[]): any[] {
