@@ -7,7 +7,9 @@
         "publish:lib:angular": "npm run build:lib:angular && cd dist/packages/angular-devextreme && npm publish --access public",
         "build:lib:react": "nx build react-devextreme",
         "publish:lib:react": "npm run build:lib:react && cd dist/packages/react-devextreme && npm publish --access public",
-        "build:lib": "npm run build:lib:angular && npm run build:lib:react"
+        "build:lib:react-mui": "nx build react-mui",
+        "publish:lib:react-mui": "npm run build:lib:react-mui && cd dist/packages/react-mui && npm publish --access public",
+        "build:lib": "npm run build:lib:angular && npm run build:lib:react && npm run build:lib:react-mui"
     },
     "private": true,
     "devDependencies": {
@@ -19,7 +21,12 @@
         "@angular/cli": "~21.1.0",
         "@angular/compiler-cli": "~21.1.0",
         "@angular/language-service": "~21.1.0",
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.0",
         "@eslint/js": "^9.8.0",
+        "@mui/icons-material": "^6.4.0",
+        "@mui/material": "^6.4.0",
+        "@mui/x-date-pickers": "^8.0.0",
         "@nx/angular": "^22.5.1",
         "@nx/devkit": "22.5.1",
         "@nx/eslint": "22.5.1",
@@ -46,6 +53,7 @@
         "@vitest/coverage-v8": "^4.0.0",
         "@vitest/ui": "^4.0.8",
         "angular-eslint": "^21.0.1",
+        "date-fns": "^4.1.0",
         "devextreme": "^23.2.12",
         "devextreme-angular": "^23.2.12",
         "devextreme-react": "^23.2.12",
