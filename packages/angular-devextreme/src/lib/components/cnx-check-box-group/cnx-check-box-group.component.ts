@@ -174,7 +174,7 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
     private async setupDataSource(): Promise<void> {
         // 1. In-memory customDataSource
         if (this.customDataSource && Array.isArray(this.customDataSource)) {
-            let filtered = this.applyCascading(this.customDataSource);
+            let filtered = this.applyCascadeRule(this.customDataSource);
             this.dataSource = this.applyIgnoreValue(filtered);
             this.checkMapValue();
             return;
@@ -193,7 +193,7 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
         }
     }
 
-    private applyCascading(items: CheckBoxViewModel[] | any[]): any[] {
+    private applyCascadeRule(items: CheckBoxViewModel[] | any[]): any[] {
         if (
             !this.cascadeRule ||
             this.cascadeBy === undefined ||
