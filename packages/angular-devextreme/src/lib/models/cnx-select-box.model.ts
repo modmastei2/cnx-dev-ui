@@ -1,4 +1,5 @@
 import { LoadOptions } from 'devextreme/data';
+import { CascadeBy } from './cnx-cascade-value';
 
 export interface ModuleSelectBoxKeys {}
 
@@ -6,7 +7,7 @@ export type SelectBoxKey = keyof ModuleSelectBoxKeys extends never
     ? string
     : keyof ModuleSelectBoxKeys;
 
-export class SelectBoxParam {
+export class SelectBoxParam implements CascadeBy {
     key?: any;
     cascadeBy?: any;
     isByKey?: boolean;

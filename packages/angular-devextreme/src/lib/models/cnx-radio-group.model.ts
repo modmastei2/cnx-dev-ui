@@ -13,4 +13,6 @@ export class RadioGroupViewModel {
     [key: string]: any;
 }
 
-export interface RadioGroupParam extends CascadeBy {}
+export class RadioGroupParam implements CascadeBy {
+    cascadeBy?: any;
+}

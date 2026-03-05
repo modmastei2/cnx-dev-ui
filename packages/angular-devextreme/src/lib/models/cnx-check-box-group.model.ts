@@ -7,7 +7,9 @@ export type CheckBoxKey = keyof ModuleCheckBoxKeys extends never
     ? string
     : keyof ModuleCheckBoxKeys;
 
-export interface CheckBoxParam extends CascadeBy {}
+export class CheckBoxParam implements CascadeBy {
+    cascadeBy?: any;
+}
 
 export class CheckBoxViewModel {
     value!: string;
