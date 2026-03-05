@@ -16,6 +16,7 @@ import type {
     TagBoxParam,
     TagBoxViewModel,
 } from './cnx-tag-box.types';
+import type { CascadeRule } from '../cnx-cascade-value.types';
 
 export interface CnxTagBoxProps {
     id?: string;
@@ -36,7 +37,9 @@ export interface CnxTagBoxProps {
     maxLength?: number;
     maxDisplayedTags?: number;
     disabled?: boolean;
+    cascadeRule?: CascadeRule | CascadeRule[];
     cascadeBy?: any;
+    ignoreValue?: any[];
     tagBoxKey?: TagBoxKey | null;
     onValueChanged?: (e: ValueChangedEvent) => void;
     onEnterKey?: () => void;
@@ -61,7 +64,9 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
     maxLength = 0,
     maxDisplayedTags,
     disabled = false,
+    cascadeRule,
     cascadeBy,
+    ignoreValue,
     tagBoxKey = null,
     onValueChanged,
     onEnterKey,
@@ -75,16 +80,28 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
         return (value || []).map((e) => e.toString());
     }, [valueStr]);
 
+    // Stable refs — ทำให้ callback ไม่ถูก recreate ทุกครั้งที่ prop เปลี่ยน
     const normalizedValueRef = useRef(normalizedValue);
+    const customDataSourceRef = useRef(customDataSource);
+    const cascadeRuleRef = useRef(cascadeRule);
+    const cascadeByRef = useRef(cascadeBy);
+    const ignoreValueRef = useRef(ignoreValue);
+
     useEffect(() => {
         normalizedValueRef.current = normalizedValue;
     }, [normalizedValue]);
-
-    const customDataSourceRef = useRef(customDataSource);
-    const cascadeByStr = JSON.stringify(cascadeBy);
     useEffect(() => {
         customDataSourceRef.current = customDataSource;
     }, [customDataSource]);
+    useEffect(() => {
+        cascadeRuleRef.current = cascadeRule;
+    }, [cascadeRule]);
+    useEffect(() => {
+        cascadeByRef.current = cascadeBy;
+    }, [cascadeBy]);
+    useEffect(() => {
+        ignoreValueRef.current = ignoreValue;
+    }, [ignoreValue]);
 
     const onValueChangedRef = useRef(onValueChanged);
     const onEnterKeyRef = useRef(onEnterKey);
@@ -99,6 +116,41 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
     const pageSize = 50;
 
     const resolvedSearchExpr = dropdownExpr || searchExpr;
+
+    // ---- Helpers (อ่านจาก ref → stable ไม่เพิ่ม dependency ให้ useCallback) ----
+
+    const applyCascadeRule = useCallback(
+        (items: TagBoxViewModel[]): TagBoxViewModel[] => {
+            const rule = cascadeRuleRef.current;
+            const by = cascadeByRef.current;
+            if (!rule || by === undefined || by == null) return items;
+
+            const rules = Array.isArray(rule) ? rule : [rule];
+            return items.filter((item) =>
+                rules.every((r) => {
+                    const parentValue =
+                        typeof by === 'object' && by !== null
+                            ? by[r.childKey]
+                            : by;
+                    return item[r.childKey] === parentValue;
+                }),
+            );
+        },
+        [],
+    ); // stable — อ่าน ref เสมอ ไม่มี dependency
+
+    const applyIgnoreValue = useCallback(
+        (items: TagBoxViewModel[]): TagBoxViewModel[] => {
+            const ignore = ignoreValueRef.current;
+            if (!ignore?.length) return items;
+            return items.filter(
+                (item) => !ignore.includes((item as any)[valueExpr]),
+            );
+        },
+        [valueExpr],
+    );
+
+    // ---- Load callback ----
 
     const setupDataSourceOnLoad = useCallback(
         async (loadOptions: LoadOptions) => {
@@ -115,7 +167,11 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
                 customDataSourceRef.current &&
                 Array.isArray(customDataSourceRef.current)
             ) {
-                let filtered = [...customDataSourceRef.current];
+                let filtered = applyCascadeRule([
+                    ...customDataSourceRef.current,
+                ]);
+                filtered = applyIgnoreValue(filtered);
+
                 if (loadOptions?.searchValue) {
                     const search = loadOptions.searchValue
                         .toString()
@@ -130,9 +186,10 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
                                 .includes(search),
                     );
                 }
+
                 const skip = loadOptions?.skip ?? 0;
                 const take = loadOptions?.take ?? 50;
-                let pagedData = filtered.slice(skip, skip + take);
+                const pagedData = filtered.slice(skip, skip + take);
 
                 return {
                     data: pagedData,
@@ -143,18 +200,17 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
 
             // Key-based service
             if (tagBoxKey && service) {
-                const parsedCascade = cascadeByStr
-                    ? JSON.parse(cascadeByStr)
-                    : undefined;
                 const result = await service.getService(tagBoxKey, {
                     key: (fromFilter?.length ?? 0) > 0 ? fromFilter : [],
-                    cascadeBy: parsedCascade,
+                    cascadeBy: cascadeByRef.current,
                     loadOptions: {
                         ...loadOptions,
                         searchValue: loadOptions.searchValue,
                         take: pageSize,
                     } as LoadOptions,
                 } as TagBoxParam);
+
+                result.data = applyIgnoreValue(result.data);
 
                 const hasInitialValue = result?.hasInitialValue ?? false;
 
@@ -177,10 +233,11 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
         [
             tagBoxKey,
             service,
-            cascadeByStr,
             pageSize,
             displayExpr,
             resolvedSearchExpr,
+            applyCascadeRule,
+            applyIgnoreValue,
         ],
     );
 
@@ -193,7 +250,11 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
                 Array.isArray(customDataSourceRef.current)
             ) {
                 let keys = Array.isArray(key) ? key : [key];
-                return customDataSourceRef.current.filter((item) =>
+                let filtered = applyCascadeRule([
+                    ...customDataSourceRef.current,
+                ]);
+                filtered = applyIgnoreValue(filtered);
+                return filtered.filter((item) =>
                     keys.includes(item[valueExpr]),
                 );
             }
@@ -203,6 +264,8 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
                     isByKey: true,
                     key: key,
                 } as TagBoxParam);
+
+                result.data = applyIgnoreValue(result.data);
                 return result?.data || [];
             }
 
@@ -211,6 +274,7 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
         [tagBoxKey, service, valueExpr],
     );
 
+    // สร้าง DataSource ใหม่เมื่อ callback เปลี่ยน หรือเมื่อ cascade/ignore เปลี่ยน
     useEffect(() => {
         const ds = new DataSource({
             load: setupDataSourceOnLoad,
@@ -220,7 +284,7 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
             requireTotalCount: true,
         });
         setDataSource(ds);
-    }, [setupDataSourceOnLoad, setupDataSourceByKey]);
+    }, [setupDataSourceOnLoad, setupDataSourceByKey, cascadeBy, ignoreValue]);
 
     const handleValueChanged = useCallback((e: ValueChangedEvent) => {
         if (onValueChangedRef.current) {

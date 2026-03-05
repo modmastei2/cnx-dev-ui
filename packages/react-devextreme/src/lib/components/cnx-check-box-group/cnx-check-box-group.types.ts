@@ -1,18 +1,19 @@
+import { CascadeBy } from '../cnx-cascade-value.types';
+
 export interface ModuleCheckBoxKeys {}
 
 export type CheckBoxKey = keyof ModuleCheckBoxKeys extends never
     ? string
     : keyof ModuleCheckBoxKeys;
 
-export interface CheckBoxParam {
-    cascadeBy?: any;
-}
+export interface CheckBoxParam extends CascadeBy {}
 
 export interface CheckBoxViewModel {
     value: string;
     text: string;
     checked?: boolean;
     disabled?: boolean;
+    [key: string]: any;
 }
 
 export interface CheckBoxDataProvider {

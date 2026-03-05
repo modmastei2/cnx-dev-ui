@@ -214,7 +214,7 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
                     typeof this.cascadeBy === 'object' &&
                     this.cascadeBy !== null
                 ) {
-                    parentVal = this.cascadeBy[rule.parentKey];
+                    parentVal = this.cascadeBy[rule.childKey];
                 } else if (
                     this.cascadeBy !== undefined &&
                     this.cascadeBy !== null

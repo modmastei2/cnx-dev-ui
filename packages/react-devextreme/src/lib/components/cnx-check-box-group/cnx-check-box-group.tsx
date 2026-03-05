@@ -13,7 +13,7 @@ import type {
     CheckBoxParam,
     CheckBoxViewModel,
 } from './cnx-check-box-group.types';
-import './cnx-check-box-group.css';
+import { CascadeRule } from '../cnx-cascade-value.types';
 
 export interface CnxCheckBoxGroupProps {
     id?: string;
@@ -23,6 +23,7 @@ export interface CnxCheckBoxGroupProps {
     layout?: 'vertical' | 'horizontal';
     mode?: 'multiple' | 'single';
     checkBoxKey?: CheckBoxKey | null;
+    cascadeRule?: CascadeRule | CascadeRule[];
     cascadeBy?: any;
     ignoreValue?: string[];
     displayExpr?: string;
@@ -39,6 +40,7 @@ export const CnxCheckBoxGroup: React.FC<CnxCheckBoxGroupProps> = ({
     layout = 'horizontal',
     mode = 'multiple',
     checkBoxKey = null,
+    cascadeRule,
     cascadeBy,
     ignoreValue,
     displayExpr = 'text',
@@ -68,24 +70,58 @@ export const CnxCheckBoxGroup: React.FC<CnxCheckBoxGroupProps> = ({
 
     // โหลด data
     useEffect(() => {
-        const applyIgnore = (items: any[]) =>
+        const applyCascadeRule = (items: CheckBoxViewModel[]) =>
+            !cascadeRule || cascadeBy === undefined || cascadeBy == null
+                ? items
+                : items.filter((item) => {
+                      const rules = Array.isArray(cascadeRule)
+                          ? cascadeRule
+                          : [cascadeRule];
+
+                      return rules.every((r) => {
+                          let parentValue: any;
+
+                          if (
+                              typeof cascadeBy === 'object' &&
+                              cascadeBy !== null
+                          )
+                              parentValue = cascadeBy[r.childKey];
+                          else if (
+                              cascadeBy !== undefined &&
+                              cascadeBy !== null
+                          )
+                              parentValue = cascadeBy;
+
+                          return item[r.childKey] === parentValue;
+                      });
+                  });
+
+        const applyIgnoreValue = (items: CheckBoxViewModel[]) =>
             ignoreValue?.length
                 ? items.filter((item) => !ignoreValue.includes(item[valueExpr]))
                 : items;
 
         if (customDataSource && Array.isArray(customDataSource)) {
-            setRawData(applyIgnore([...customDataSource]));
+            const filtered = applyCascadeRule(customDataSource);
+            setRawData(applyIgnoreValue(filtered));
             return;
         }
 
         if (checkBoxKey && service) {
             service
                 .getService(checkBoxKey, { cascadeBy } as CheckBoxParam)
-                .then((result) => setRawData(applyIgnore(result || [])));
+                .then((result) => setRawData(applyIgnoreValue(result || [])));
         } else {
             setRawData([]);
         }
-    }, [checkBoxKey, cascadeBy, customDataSource, ignoreValue, valueExpr]);
+    }, [
+        checkBoxKey,
+        cascadeRule,
+        cascadeBy,
+        customDataSource,
+        ignoreValue,
+        valueExpr,
+    ]);
 
     const toggleByKey = useCallback((key: string, checked: boolean) => {
         const current = valueRef.current || [];
@@ -124,7 +160,12 @@ export const CnxCheckBoxGroup: React.FC<CnxCheckBoxGroupProps> = ({
 
     return (
         <div
-            className={`cnx-check-box-group ${layout === 'horizontal' ? 'horizontal' : 'vertical'}`}
+            style={{
+                display: 'flex',
+                gap: layout === 'horizontal' ? 12 : 6,
+                flexWrap: 'wrap',
+                flexDirection: layout === 'horizontal' ? 'row' : 'column',
+            }}
         >
             {dataSource.map((item) => {
                 const itemDisabled = item.disabled || disabled;
@@ -133,7 +174,16 @@ export const CnxCheckBoxGroup: React.FC<CnxCheckBoxGroupProps> = ({
                 const domName = `cnx_check_box_group_${name}_${itemKey}`;
 
                 return (
-                    <div className="check-box-item" key={itemKey}>
+                    <div
+                        key={itemKey}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            flexBasis: 'auto',
+                            marginInlineEnd: 8,
+                        }}
+                    >
                         <CheckBox
                             key={`${domId}_${externalValueKey}`}
                             id={domId}
@@ -147,7 +197,16 @@ export const CnxCheckBoxGroup: React.FC<CnxCheckBoxGroupProps> = ({
                         />
                         {!!(item as any)[displayExpr] && (
                             <span
-                                className={`check-box-label ${!itemDisabled ? 'clickable' : ''} ${itemDisabled ? 'muted' : ''}`}
+                                style={{
+                                    fontSize: 12,
+                                    userSelect: 'none',
+                                    cursor: !itemDisabled
+                                        ? 'pointer'
+                                        : 'default',
+                                    color: !itemDisabled
+                                        ? 'inherit'
+                                        : '#9ca3af',
+                                }}
                                 onClick={() =>
                                     !itemDisabled &&
                                     toggleByKey(itemKey, !item.checked)

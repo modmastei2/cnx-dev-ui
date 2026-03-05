@@ -32,7 +32,7 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
     @Input('name') public name: string = '';
     @Input('disabled') public disabled: boolean = false;
     @Input('layout') public layout: 'vertical' | 'horizontal' = 'horizontal';
-    @Input('autoDefault') public autoDefault: boolean = true;
+    @Input('autoDefault') public autoDefault: boolean = false;
 
     @Input('displayExpr')
     set displayExpr(val: string | null) {
@@ -78,13 +78,13 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
 
     @Input('value')
     set value(val: string | null) {
-        this._value = val?.toString() ?? '';
-        this.cdr.detectChanges();
+        const _val = val !== null ? val.toString() : null;
+        if (_val !== this._value) this._value = _val;
     }
-    get value(): string {
+    get value(): string | null {
         return this._value;
     }
-    public _value: string = '';
+    public _value: string | null = null;
 
     @Output('onValueChanged')
     public eventValueChanged = new EventEmitter<ValueChangedEvent>();
@@ -120,7 +120,7 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
                 JSON.stringify(cascadeChange.currentValue) !==
                 JSON.stringify(cascadeChange.previousValue);
             if (isDiff) {
-                this.value = '';
+                this.value = null;
                 await this.setupDataSource();
             }
         }
@@ -142,6 +142,7 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
             let filtered = this.applyCascadeRule(this.customDataSource);
             this.dataSource = this.applyIgnoreValue(filtered);
             this.applyAutoDefault();
+            this.cdr.detectChanges();
             return;
         }
 
@@ -154,7 +155,7 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
             );
             this.dataSource = this.applyIgnoreValue(result);
             this.applyAutoDefault();
-            return;
+            this.cdr.detectChanges();
         }
     }
 
@@ -179,7 +180,7 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
                     typeof this.cascadeBy === 'object' &&
                     this.cascadeBy !== null
                 ) {
-                    parentVal = this.cascadeBy[rule.parentKey];
+                    parentVal = this.cascadeBy[rule.childKey];
                 } else if (
                     this.cascadeBy !== undefined &&
                     this.cascadeBy !== null
@@ -204,11 +205,16 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
     }
 
     private applyAutoDefault(): void {
-        if (this.autoDefault && !this.value && this.dataSource.length > 0) {
+        if (
+            this.autoDefault &&
+            !this.value &&
+            !this.disabled &&
+            this.dataSource.length > 0
+        ) {
             // Use setTimeout to avoid NG0100 when updating parent's value synchronously
             setTimeout(() => {
                 this.value = this.dataSource[0]?.[this._valueExpr] ?? '';
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             });
         }
     }

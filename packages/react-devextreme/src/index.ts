@@ -86,3 +86,5 @@ export {
 export { CnxDataProvider } from './lib/core/cnx-data-provider';
 
 export type { CnxDataProviderProps } from './lib/core/cnx-data-provider';
+
+export type { CascadeRule } from './lib/components/cnx-cascade-value.types';

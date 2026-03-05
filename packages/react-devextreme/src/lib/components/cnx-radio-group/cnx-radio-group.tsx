@@ -13,6 +13,7 @@ import type {
     RadioGroupParam,
     RadioGroupViewModel,
 } from './cnx-radio-group.types';
+import { CascadeRule } from '../cnx-cascade-value.types';
 
 export interface CnxRadioGroupProps {
     id?: string;
@@ -23,6 +24,7 @@ export interface CnxRadioGroupProps {
     displayExpr?: string;
     valueExpr?: string;
     radioGroupKey?: RadioGroupKey | null;
+    cascadeRule?: CascadeRule | CascadeRule[];
     cascadeBy?: any;
     ignoreValue?: string[];
     customDataSource?: any[];
@@ -35,10 +37,11 @@ export const CnxRadioGroup: React.FC<CnxRadioGroupProps> = ({
     name = '',
     disabled = false,
     layout = 'horizontal',
-    autoDefault = true,
+    autoDefault = false,
     displayExpr = 'text',
     valueExpr = 'value',
     radioGroupKey = null,
+    cascadeRule,
     cascadeBy,
     ignoreValue,
     customDataSource,
@@ -59,31 +62,49 @@ export const CnxRadioGroup: React.FC<CnxRadioGroupProps> = ({
         onValueChangedRef.current = onValueChanged;
     }, [onValueChanged]);
 
-    const applyAutoDefault = useCallback(
-        (data: any[]) => {
-            if (autoDefault && !value && data.length > 0) {
-                // Trigger default initial value async
-                setTimeout(() => {
-                    if (onValueChangedRef.current) {
-                        onValueChangedRef.current({
-                            value: data[0][valueExpr],
-                        } as ValueChangedEvent);
-                    }
-                }, 0);
-            }
-        },
-        [autoDefault, value, valueExpr],
-    );
-
     // โหลด data
     useEffect(() => {
-        const applyIgnore = (items: any[]) =>
+        const applyCascadeRule = (items: RadioGroupViewModel[]) =>
+            !cascadeRule || cascadeBy === undefined || cascadeBy == null
+                ? items
+                : items.filter((item) => {
+                      const rules = Array.isArray(cascadeRule)
+                          ? cascadeRule
+                          : [cascadeRule];
+
+                      return rules.every((r) => {
+                          let parentValue: any;
+
+                          if (
+                              typeof cascadeBy === 'object' &&
+                              cascadeBy !== null
+                          )
+                              parentValue = cascadeBy[r.childKey];
+                          else if (
+                              cascadeBy !== undefined &&
+                              cascadeBy !== null
+                          )
+                              parentValue = cascadeBy;
+
+                          return item[r.childKey] === parentValue;
+                      });
+                  });
+
+        const applyIgnore = (items: RadioGroupViewModel[]) =>
             ignoreValue?.length
                 ? items.filter((item) => !ignoreValue.includes(item[valueExpr]))
                 : items;
 
+        const applyAutoDefault = () => {
+            if (autoDefault && !value && !disabled && rawData.length > 0) {
+                value = rawData[0][valueExpr];
+            }
+        };
+
         if (customDataSource && Array.isArray(customDataSource)) {
-            setRawData(applyIgnore([...customDataSource]));
+            const filtered = applyCascadeRule(customDataSource);
+            setRawData(applyIgnore(filtered));
+            applyAutoDefault();
             return;
         }
 
@@ -92,11 +113,21 @@ export const CnxRadioGroup: React.FC<CnxRadioGroupProps> = ({
                 .getService(radioGroupKey, {
                     cascadeBy: cascadeBy,
                 } as RadioGroupParam)
-                .then((items) => setRawData(applyIgnore(items || [])));
+                .then((items) => {
+                    setRawData(applyIgnore(items || []));
+                    applyAutoDefault();
+                });
         } else {
             setRawData([]);
         }
-    }, [radioGroupKey, cascadeBy, customDataSource, ignoreValue, valueExpr]);
+    }, [
+        radioGroupKey,
+        cascadeRule,
+        cascadeBy,
+        customDataSource,
+        ignoreValue,
+        valueExpr,
+    ]);
 
     const dataSource = useMemo(() => {
         return rawData;
@@ -116,7 +147,7 @@ export const CnxRadioGroup: React.FC<CnxRadioGroupProps> = ({
             displayExpr={displayExpr}
             valueExpr={valueExpr}
             dataSource={dataSource}
-            value={value === null ? undefined : value}
+            value={value}
             onValueChanged={handleValueChanged}
         />
     );

@@ -1,4 +1,4 @@
-export class CascadeRule {
+export interface CascadeRule {
     cascadeField: string;
     childKey: string;
 }

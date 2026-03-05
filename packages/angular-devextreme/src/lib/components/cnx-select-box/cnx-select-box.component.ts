@@ -119,7 +119,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     get dropdownExpr(): string {
         return this._dropdownExpr;
     }
-    private _dropdownExpr: string = 'dropdownText';
+    private _dropdownExpr: string = 'text';
 
     @Input('searchEnabled') public searchEnabled: boolean = true;
     @Input('searchTimeout') public searchTimeout: number = 500;
@@ -127,13 +127,13 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
 
     @Input('value')
     set value(val: string | number | null) {
-        const _val = val?.toString() ?? '';
+        const _val = val !== null ? val.toString() : null;
         if (_val !== this._value) this._value = _val;
     }
-    get value(): string {
+    get value(): string | null {
         return this._value;
     }
-    private _value: string = '';
+    private _value: string | null = null;
 
     public dataSource!: DataSource;
     @Input('customDataSource') public customDataSource?: any;
@@ -297,7 +297,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
                     typeof this.cascadeBy === 'object' &&
                     this.cascadeBy !== null
                 ) {
-                    parentVal = this.cascadeBy[rule.parentKey];
+                    parentVal = this.cascadeBy[rule.childKey];
                 } else if (
                     this.cascadeBy !== undefined &&
                     this.cascadeBy !== null

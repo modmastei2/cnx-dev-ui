@@ -1,4 +1,5 @@
 import { LoadOptions } from 'devextreme/data';
+import { CascadeBy } from '../cnx-cascade-value.types';
 
 export interface ModuleTagBoxKeys {}
 
@@ -6,9 +7,8 @@ export type TagBoxKey = keyof ModuleTagBoxKeys extends never
     ? string
     : keyof ModuleTagBoxKeys;
 
-export interface TagBoxParam {
+export interface TagBoxParam extends CascadeBy {
     key?: any;
-    cascadeBy?: any;
     isByKey?: boolean;
     loadOptions?: LoadOptions;
 }
@@ -17,6 +17,7 @@ export interface TagBoxViewModel {
     text: string;
     value: any;
     dropdownText: string;
+    [key: string]: any;
 }
 
 export interface TagBoxLoadResult {
