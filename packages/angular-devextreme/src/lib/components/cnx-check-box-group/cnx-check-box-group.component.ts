@@ -74,12 +74,12 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
     @Input('valueExpr')
     set valueExpr(val: string | null) {
         const _val = val?.toString() || '';
-        if (_val && _val !== this.valueExprOption) this.valueExprOption = _val;
+        if (_val && _val !== this._valueExpr) this._valueExpr = _val;
     }
     get valueExpr(): string {
-        return this.valueExprOption;
+        return this._valueExpr;
     }
-    public valueExprOption: string = 'value';
+    public _valueExpr: string = 'value';
 
     @Input('customDataSource')
     public customDataSource?: CheckBoxViewModel[] | any[];
@@ -151,9 +151,7 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
         if (this.mode === 'single') {
             if ($event.value === true) {
                 this.dataSource.forEach((i) => {
-                    if (
-                        i[this.valueExprOption] !== item[this.valueExprOption]
-                    ) {
+                    if (i[this._valueExpr] !== item[this._valueExpr]) {
                         i.checked = false;
                     }
                 });
@@ -163,7 +161,7 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
         item.checked = $event.value;
         const value = this.dataSource
             .filter((i) => i.checked === true)
-            .map((i) => i[this.valueExprOption]);
+            .map((i) => i[this._valueExpr]);
 
         this.eventValueChanged.emit({ value });
     }
@@ -230,18 +228,21 @@ export class CnxCheckBoxGroupComponent implements OnInit, OnChanges {
         return filtered;
     }
 
-    private applyIgnoreValue(items: CheckBoxViewModel[] | any[]): any[] {
-        if (!this.ignoreValue?.length) return items;
-        return items.filter(
-            (item) => !this.ignoreValue.includes(item[this.valueExprOption]),
-        );
+    private applyIgnoreValue(
+        items: CheckBoxViewModel[] | any[],
+    ): CheckBoxViewModel[] {
+        return !this.ignoreValue?.length
+            ? items
+            : items.filter(
+                  (item) => !this.ignoreValue.includes(item[this.valueExpr]),
+              );
     }
 
     private checkMapValue(): void {
         if (this.dataSource.length > 0) {
             this.dataSource.forEach((item) => {
                 item.checked = this._value
-                    ? this._value.includes(item[this.valueExprOption])
+                    ? this._value.includes(item[this.valueExpr])
                     : false;
             });
             this.cdr.detectChanges();

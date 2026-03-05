@@ -119,7 +119,7 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     get dropdownExpr(): string {
         return this._dropdownExpr;
     }
-    private _dropdownExpr: string = 'text';
+    private _dropdownExpr: string = 'dropdownText';
 
     @Input('searchEnabled') public searchEnabled: boolean = true;
     @Input('searchTimeout') public searchTimeout: number = 500;
@@ -314,10 +314,10 @@ export class CnxSelectBoxComponent implements OnInit, OnChanges {
     private applyIgnoreValue(
         items: SelectBoxViewModel[] | any[],
     ): SelectBoxViewModel[] {
-        if (!this.ignoreValue?.length) return items;
-
-        return items.filter(
-            (item) => !this.ignoreValue.includes(item[this.valueExpr]),
-        );
+        return !this.ignoreValue?.length
+            ? items
+            : items.filter(
+                  (item) => !this.ignoreValue.includes(item[this.valueExpr]),
+              );
     }
 }

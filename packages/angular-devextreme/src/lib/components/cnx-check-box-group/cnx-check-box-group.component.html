@@ -3,16 +3,9 @@
         <div class="check-box-item">
             <dx-check-box
                 #checkBox
-                [id]="
-                    'cnx_cbg_' + id + '_' + $index + '_' + item[valueExprOption]
-                "
+                [id]="'cnx_cbg_' + id + '_' + $index + '_' + item[valueExpr]"
                 [name]="
-                    'cnx_cbg_' +
-                    name +
-                    '_' +
-                    $index +
-                    '_' +
-                    item[valueExprOption]
+                    'cnx_cbg_' + name + '_' + $index + '_' + item[valueExpr]
                 "
                 [(value)]="item.checked"
                 [iconSize]="13"

@@ -341,10 +341,10 @@ export class CnxTagBoxComponent implements OnInit, OnChanges {
     private applyIgnoreValue(
         items: TagBoxViewModel[] | any[],
     ): TagBoxViewModel[] {
-        if (!this.ignoreValue?.length) return items;
-
-        return items.filter(
-            (item) => !this.ignoreValue.includes(item[this.valueExpr]),
-        );
+        return !this.ignoreValue?.length
+            ? items
+            : items.filter(
+                  (item) => !this.ignoreValue.includes(item[this.valueExpr]),
+              );
     }
 }

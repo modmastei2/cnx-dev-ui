@@ -48,12 +48,12 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
     @Input('valueExpr')
     set valueExpr(val: string | null) {
         const _val = val?.toString() || '';
-        if (_val && _val !== this.valueExprOption) this.valueExprOption = _val;
+        if (_val && _val !== this._valueExpr) this._valueExpr = _val;
     }
     get valueExpr(): string {
-        return this.valueExprOption;
+        return this._valueExpr;
     }
-    public valueExprOption: string = 'value';
+    public _valueExpr: string = 'value';
 
     @Input('radioGroupKey') public radioGroupKey:
         | RadioGroupKey
@@ -193,18 +193,21 @@ export class CnxRadioGroupComponent implements OnInit, OnChanges {
         return filtered;
     }
 
-    private applyIgnoreValue(items: RadioGroupViewModel[] | any[]): any[] {
-        if (!this.ignoreValue?.length) return items;
-        return items.filter(
-            (item) => !this.ignoreValue.includes(item[this.valueExprOption]),
-        );
+    private applyIgnoreValue(
+        items: RadioGroupViewModel[] | any[],
+    ): RadioGroupViewModel[] {
+        return !this.ignoreValue?.length
+            ? items
+            : items.filter(
+                  (item) => !this.ignoreValue.includes(item[this._valueExpr]),
+              );
     }
 
     private applyAutoDefault(): void {
         if (this.autoDefault && !this.value && this.dataSource.length > 0) {
             // Use setTimeout to avoid NG0100 when updating parent's value synchronously
             setTimeout(() => {
-                this.value = this.dataSource[0]?.[this.valueExprOption] ?? '';
+                this.value = this.dataSource[0]?.[this._valueExpr] ?? '';
                 this.cdr.detectChanges();
             });
         }
