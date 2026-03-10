@@ -23,6 +23,7 @@ export interface CnxTagBoxProps {
     displayExpr?: string;
     valueExpr?: string;
     searchExpr?: string;
+    searchEnabled?: boolean;
     groupByExpr?: string;
     showClearButton?: boolean;
     showSelectionControl?: boolean;
@@ -45,6 +46,7 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
     displayExpr = 'text',
     valueExpr = 'value',
     searchExpr = 'text',
+    searchEnabled = true,
     groupByExpr,
     showClearButton = true,
     showSelectionControl,
@@ -278,6 +280,14 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
                 <TextField
                     name={name ? `cnx_tag_box_search_${name}` : undefined}
                     {...params}
+                    inputProps={{
+                        ...params.inputProps,
+                        readOnly: !searchEnabled,
+                        style: {
+                            cursor: !searchEnabled ? 'pointer' : undefined,
+                            ...params.inputProps?.style,
+                        },
+                    }}
                     size="small"
                     placeholder={!selectedOption?.length ? placeholder : ''}
                     sx={{

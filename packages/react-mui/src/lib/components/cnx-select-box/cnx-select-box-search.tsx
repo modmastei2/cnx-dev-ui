@@ -19,6 +19,7 @@ export interface CnxSelectBoxSearchProps {
     displayExpr?: string;
     valueExpr?: string;
     searchExpr?: string;
+    searchEnabled?: boolean;
     groupByExpr?: string;
     showClearButton?: boolean;
     value?: string | number | null;
@@ -39,6 +40,7 @@ export const CnxSelectBoxSearch: React.FC<CnxSelectBoxSearchProps> = ({
     displayExpr = 'text',
     valueExpr = 'value',
     searchExpr = 'text',
+    searchEnabled = true,
     groupByExpr,
     showClearButton = true,
     value = null,
@@ -223,6 +225,14 @@ export const CnxSelectBoxSearch: React.FC<CnxSelectBoxSearchProps> = ({
                 <TextField
                     name={name ? `cnx_select_box_search_${name}` : undefined}
                     {...params}
+                    inputProps={{
+                        ...params.inputProps,
+                        readOnly: !searchEnabled,
+                        style: {
+                            cursor: !searchEnabled ? 'pointer' : 'text',
+                            ...params.inputProps?.style,
+                        },
+                    }}
                     size="small"
                     placeholder={placeholder}
                     sx={{
