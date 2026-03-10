@@ -1,5 +1,6 @@
 // --- SelectBox ---
 export { CnxSelectBox } from './lib/components/cnx-select-box/cnx-select-box';
+export { CnxSelectBoxSearch } from './lib/components/cnx-select-box/cnx-select-box-search';
 
 export type { CnxSelectBoxProps } from './lib/components/cnx-select-box/cnx-select-box';
 
@@ -16,6 +17,25 @@ export {
     SelectBoxDataProviderContext,
     useSelectBoxDataProvider,
 } from './lib/components/cnx-select-box/cnx-select-box.context';
+
+// --- TagBox ---
+export { CnxTagBox } from './lib/components/cnx-tag-box/cnx-tag-box';
+
+export type { CnxTagBoxProps } from './lib/components/cnx-tag-box/cnx-tag-box';
+
+export type {
+    TagBoxDataProvider,
+    TagBoxKey,
+    TagBoxLoadResult,
+    TagBoxParam,
+    TagBoxViewModel,
+    ModuleTagBoxKeys,
+} from './lib/components/cnx-tag-box/cnx-tag-box.types';
+
+export {
+    TagBoxDataProviderContext,
+    useTagBoxDataProvider,
+} from './lib/components/cnx-tag-box/cnx-tag-box.context';
 
 // --- CheckBoxGroup ---
 export { CnxCheckBoxGroup } from './lib/components/cnx-check-box-group/cnx-check-box-group';

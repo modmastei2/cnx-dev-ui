@@ -1,33 +1,25 @@
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import IconButton from '@mui/material/IconButton';
-import ClearIcon from '@mui/icons-material/Clear';
-import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
-import MenuItem from '@mui/material/MenuItem';
-
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
+import CircularProgress from '@mui/material/CircularProgress';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { CascadeRule } from '../cnx-cascade-value.types';
+import type { ValueChangedEvent } from '../cnx-value-changed.types';
 import type {
     SelectBoxLoadResult,
     SelectBoxParam,
     SelectBoxViewModel,
 } from './cnx-select-box.types';
 import { useSelectBoxDataProvider } from './cnx-select-box.context';
-import { CascadeRule } from '../cnx-cascade-value.types';
-import { ValueChangedEvent } from '../cnx-value-changed.types';
 
-export interface CnxSelectBoxProps {
+export interface CnxSelectBoxSearchProps {
     id?: string;
     name?: string;
     width?: string | number;
     placeholder?: string;
     displayExpr?: string;
     valueExpr?: string;
+    searchExpr?: string;
+    groupByExpr?: string;
     showClearButton?: boolean;
     value?: string | number | null;
     customDataSource?: any[];
@@ -40,12 +32,14 @@ export interface CnxSelectBoxProps {
     onEnterKey?: () => void;
 }
 
-export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
+export const CnxSelectBoxSearch: React.FC<CnxSelectBoxSearchProps> = ({
     id,
     name,
     placeholder = 'Please select...',
     displayExpr = 'text',
     valueExpr = 'value',
+    searchExpr = 'text',
+    groupByExpr,
     showClearButton = true,
     value = null,
     customDataSource,
@@ -58,15 +52,14 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
     onEnterKey,
 }) => {
     const service = useSelectBoxDataProvider();
-    const selectBoxRef = useRef<HTMLSelectElement>(null);
 
     const [dataSource, setDataSource] = useState<SelectBoxLoadResult | null>(
         null,
     );
+    const [isLoading, setIsLoading] = useState(false);
 
     // stable ref
     const customDataSourceRef = useRef(customDataSource);
-
     const valueRef = useRef(value);
     const onValueChangedRef = useRef(onValueChanged);
     const onEnterKeyRef = useRef(onEnterKey);
@@ -74,15 +67,12 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
     useEffect(() => {
         valueRef.current = value;
     }, [value]);
-
     useEffect(() => {
         customDataSourceRef.current = customDataSource;
     }, [customDataSource]);
-
     useEffect(() => {
         onValueChangedRef.current = onValueChanged;
     }, [onValueChanged]);
-
     useEffect(() => {
         onEnterKeyRef.current = onEnterKey;
     }, [onEnterKey]);
@@ -114,10 +104,8 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
             rule: CascadeRule | CascadeRule[] | undefined,
             by: any,
         ): SelectBoxViewModel[] => {
-            if (!rule || by === undefined || by == null) return items;
-
+            if (!rule || by == null) return items;
             const rules = Array.isArray(rule) ? rule : [rule];
-
             return items.filter((item) =>
                 rules.every((r) => {
                     const parentValue =
@@ -138,7 +126,6 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
         ): SelectBoxViewModel[] => {
             if (!ignore || !ignore.length) return items;
             const ignores = Array.isArray(ignore) ? ignore : [ignore];
-
             return items.filter((item) => !ignores.includes(item[valueExpr]));
         },
         [valueExpr],
@@ -153,17 +140,14 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
                 let filtered = [...customDataSourceRef.current];
                 filtered = applyCascadeRule(filtered, cascadeRule, cascadeBy);
                 filtered = applyIgnoreValue(filtered, ignoreValue);
-
                 return { data: filtered, totalCount: filtered.length };
             }
 
             if (selectBoxKey && service) {
                 const result = await service.getService(selectBoxKey, {
-                    cascadeBy: cascadeBy,
+                    cascadeBy,
                 } as SelectBoxParam);
-
                 result.data = applyIgnoreValue(result?.data, ignoreValue);
-
                 return { data: result.data, totalCount: result.totalCount };
             }
 
@@ -181,93 +165,88 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
     useEffect(() => {
         let cancelled = false;
         const loadData = async () => {
+            setIsLoading(true);
             const ds = await setupDataSource();
-            if (!cancelled) setDataSource(ds);
+            if (!cancelled) {
+                setDataSource(ds);
+                setIsLoading(false);
+            }
         };
-
         loadData();
         return () => {
             cancelled = true;
         };
     }, [setupDataSource]);
 
-    const handleChange = (newValue: any) => {
+    const handleChange = useCallback((newValue: any) => {
         const oldValue = valueRef.current;
-
         if (oldValue === newValue) return;
-
         onValueChangedRef.current?.({
             previousValue: oldValue,
             value: newValue,
         });
-    };
-
-    const renderIcon = useCallback((iconProp: any) => {
-        return <ArrowDropDown titleAccess="Open" {...iconProp} />;
     }, []);
 
-    const renderClearIcon = useCallback(
-        () =>
-            showClearButton && value ? (
-                <IconButton
-                    size="small"
-                    sx={{ mr: 2 }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleChange(null);
-                    }}
-                >
-                    <ClearIcon titleAccess="Clear" fontSize="small" />
-                </IconButton>
-            ) : null,
-        [showClearButton, value, handleChange],
-    );
-
-    const menuItems = useMemo(() => {
-        return dataSource?.data?.map((option) => (
-            <MenuItem key={option[valueExpr]} value={option[valueExpr]}>
-                {option[displayExpr]}
-            </MenuItem>
-        ));
-    }, [dataSource, valueExpr, displayExpr]);
-
-    const isValueInOptions = useMemo(() => {
-        if (!dataSource?.data || value == null || value === '') return false;
-        return dataSource.data.some((option) => option[valueExpr] === value);
-    }, [dataSource, value, valueExpr]);
+    // หา option object จาก value ปัจจุบัน
+    const selectedOption =
+        dataSource?.data?.find((option) => option[valueExpr] === value) ?? null;
 
     return (
-        <FormControl fullWidth size="small">
-            <Select
-                id={`cnx_select_box_` + id}
-                name={`cnx_select_box_` + name}
-                ref={selectBoxRef}
-                value={value ?? ''}
-                disabled={disabled}
-                onChange={(e) => {
-                    handleChange(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') onEnterKeyRef.current?.();
-                }}
-                IconComponent={renderIcon}
-                endAdornment={renderClearIcon()}
-                displayEmpty
-            >
-                {placeholder && (
-                    <MenuItem value="" disabled sx={{ display: 'none' }}>
-                        <span className="text-content-1/45">{placeholder}</span>
-                    </MenuItem>
-                )}
-                {value != null && value !== '' && !isValueInOptions && (
-                    <MenuItem value={value as any} sx={{ display: 'none' }}>
-                        {String(value)}
-                    </MenuItem>
-                )}
-                {menuItems}
-            </Select>
-        </FormControl>
+        <Autocomplete
+            id={id ? `cnx_select_box_search_${id}` : undefined}
+            options={dataSource?.data ?? []}
+            loading={isLoading}
+            disabled={disabled}
+            disableClearable={!showClearButton}
+            groupBy={(option) => (groupByExpr ? option[groupByExpr] : '')}
+            value={selectedOption}
+            getOptionLabel={(option) => option[displayExpr] ?? ''}
+            isOptionEqualToValue={(option, val) =>
+                option[valueExpr] === val[valueExpr]
+            }
+            filterOptions={(options, { inputValue }) => {
+                if (!inputValue) return options;
+                const lower = inputValue.toLowerCase();
+                return options.filter((o) =>
+                    String(o[searchExpr] ?? '')
+                        .toLowerCase()
+                        .includes(lower),
+                );
+            }}
+            onChange={(_, newOption) => {
+                handleChange(newOption ? newOption[valueExpr] : null);
+            }}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') onEnterKeyRef.current?.();
+            }}
+            renderInput={(params) => (
+                <TextField
+                    name={name ? `cnx_select_box_search_${name}` : undefined}
+                    {...params}
+                    size="small"
+                    placeholder={placeholder}
+                    sx={{
+                        '& .MuiAutocomplete-clearIndicator': {
+                            visibility: 'visible',
+                        },
+                    }}
+                    slotProps={{
+                        input: {
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {isLoading && (
+                                        <CircularProgress size={16} />
+                                    )}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        },
+                    }}
+                />
+            )}
+        />
     );
 };
 
-export default React.memo(CnxSelectBox);
+export default React.memo(CnxSelectBoxSearch);

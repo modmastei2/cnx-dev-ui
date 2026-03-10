@@ -17,6 +17,7 @@ export interface SelectBoxViewModel {
     text: string;
     value: any;
     dropdownText: string;
+    [key: string]: any;
 }
 
 export interface SelectBoxLoadResult {
