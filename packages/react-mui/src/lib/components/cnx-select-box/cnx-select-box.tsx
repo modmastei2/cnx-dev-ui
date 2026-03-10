@@ -239,8 +239,8 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
     return (
         <FormControl fullWidth size="small">
             <Select
-                id={`cnx_select_box_` + id}
-                name={`cnx_select_box_` + name}
+                id={`cnx_select_box_${id}`}
+                name={`cnx_select_box_${name}`}
                 ref={selectBoxRef}
                 value={value ?? ''}
                 disabled={disabled}

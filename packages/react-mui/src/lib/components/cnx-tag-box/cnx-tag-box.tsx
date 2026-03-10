@@ -208,7 +208,7 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
 
     return (
         <Autocomplete
-            id={id ? `cnx_tag_box_search_${id}` : undefined}
+            id={`cnx_tag_box_search_${id}`}
             multiple
             limitTags={maxDispayTag}
             options={dataSource?.data ?? []}
@@ -278,7 +278,7 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
             }}
             renderInput={(params) => (
                 <TextField
-                    name={name ? `cnx_tag_box_search_${name}` : undefined}
+                    name={`cnx_tag_box_search_${name}`}
                     {...params}
                     inputProps={{
                         ...params.inputProps,

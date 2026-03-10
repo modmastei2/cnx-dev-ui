@@ -195,7 +195,7 @@ export const CnxSelectBoxSearch: React.FC<CnxSelectBoxSearchProps> = ({
 
     return (
         <Autocomplete
-            id={id ? `cnx_select_box_search_${id}` : undefined}
+            id={`cnx_select_box_search_${id}`}
             options={dataSource?.data ?? []}
             loading={isLoading}
             disabled={disabled}
@@ -223,7 +223,7 @@ export const CnxSelectBoxSearch: React.FC<CnxSelectBoxSearchProps> = ({
             }}
             renderInput={(params) => (
                 <TextField
-                    name={name ? `cnx_select_box_search_${name}` : undefined}
+                    name={`cnx_select_box_search_${name}`}
                     {...params}
                     inputProps={{
                         ...params.inputProps,
