@@ -17,6 +17,7 @@ module.exports = withNx(
             '@mui/x-date-pickers',
             '@emotion/react',
             '@emotion/styled',
+            'dayjs',
         ],
         format: ['esm'],
         assets: [{ input: '.', output: '.', glob: 'README.md' }],
