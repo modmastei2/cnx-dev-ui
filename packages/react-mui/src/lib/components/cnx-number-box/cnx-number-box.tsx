@@ -7,36 +7,35 @@ import React, {
 } from 'react';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Box from '@mui/material/Box';
+import FormControl from '@mui/material/FormControl';
+import { ValueChangedEvent } from '../cnx-value-changed.types';
+import IconButton from '@mui/material/IconButton';
+import ClearIcon from '@mui/icons-material/Clear';
 
 export interface CnxNumberBoxProps {
     id?: string;
     name?: string;
-    disabled?: boolean;
     value?: number | null;
     format?: string;
     numberType?: 'positive' | 'negative' | 'percent' | 'positivePercent' | null;
     integer?: number;
     max?: number;
     min?: number;
-    allowEmpty?: boolean;
-    tabIndex?: number;
-    disableArrow?: boolean;
+    allowArrowKey?: boolean;
     step?: number;
-    onValueChanged?: (e: {
-        value: number | null;
-        previousValue?: number | null;
-        fromInit?: boolean;
-    }) => void;
+    allowEmpty?: boolean;
+    showClearButton?: boolean;
+    disabled?: boolean;
+    valueChangeEvent?: 'change' | 'blur';
+    onValueChanged?: (e: ValueChangedEvent) => void;
     onEnterKey?: () => void;
 }
 
 function formatNumberValue(val: number | null, format: string): string {
     if (val === null || val === undefined) return '';
-    // Parse format like '#,##0' or '#,##0.00'
     const dotIndex = format.indexOf('.');
     const decimalDigits = dotIndex >= 0 ? format.length - dotIndex - 1 : 0;
     const useGrouping = format.includes(',');
@@ -48,30 +47,40 @@ function formatNumberValue(val: number | null, format: string): string {
 }
 
 export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
-    id = '',
-    name = '',
-    disabled = false,
+    id,
+    name,
     value = null,
-    format = '#,##0',
-    numberType = null,
+    format = '#,##0.00',
+    numberType,
     integer = 0,
     max,
     min,
-    allowEmpty = false,
-    tabIndex,
-    disableArrow = false,
+    allowArrowKey = true,
     step = 1,
+    allowEmpty = true,
+    showClearButton = true,
+    disabled = false,
+    valueChangeEvent = 'blur',
     onValueChanged,
     onEnterKey,
 }) => {
+    const valueRef = useRef(value);
     const onValueChangedRef = useRef(onValueChanged);
     const onEnterKeyRef = useRef(onEnterKey);
-    const previousValueRef = useRef<number | null>(value ?? null);
+
+    // Keep track of the last value emitted during blur to prevent duplicate emissions
+    const lastEmittedValueRef = useRef(value);
 
     useEffect(() => {
+        valueRef.current = value;
         onValueChangedRef.current = onValueChanged;
         onEnterKeyRef.current = onEnterKey;
-    }, [onValueChanged, onEnterKey]);
+    }, [value, onValueChanged, onEnterKey]);
+
+    const [isFocused, setIsFocused] = useState(false);
+    const [strValue, setStrValue] = useState<string>(
+        value !== null && value !== undefined ? String(value) : '',
+    );
 
     const maxPossibleDigit = 15;
 
@@ -109,15 +118,98 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
         return { internalMin: computedMin, internalMax: computedMax };
     }, [numberType, integer, max, min, format]);
 
-    // Local display state for text field
-    const [isFocused, setIsFocused] = useState(false);
-    const [rawInput, setRawInput] = useState<string>(
-        value !== null && value !== undefined ? String(value) : '',
+    const handleChange = useCallback(
+        (newValue: number | null, newStrValue?: string, forceEmit = false) => {
+            const oldValue = valueRef.current;
+
+            if (newStrValue !== undefined) {
+                setStrValue(newStrValue);
+            } else {
+                setStrValue(
+                    newValue !== null && newValue !== undefined
+                        ? String(newValue)
+                        : '',
+                );
+            }
+
+            if (oldValue === newValue) return;
+
+            if (valueChangeEvent === 'change' || forceEmit) {
+                lastEmittedValueRef.current = newValue;
+                onValueChangedRef.current?.({
+                    previousValue: oldValue,
+                    value: newValue,
+                });
+            }
+        },
+        [valueChangeEvent],
     );
+
+    const handleFocus = useCallback(() => {
+        setIsFocused(true);
+        setStrValue(value !== null && value !== undefined ? String(value) : '');
+        lastEmittedValueRef.current = value;
+    }, [value]);
+
+    const handleBlur = useCallback(() => {
+        setIsFocused(false);
+        const parsed = parseFloat(strValue.replace(/,/g, ''));
+        let next: number | null =
+            strValue === '' || isNaN(parsed) ? null : parsed;
+
+        if (next !== null) {
+            if (internalMax !== undefined && next > internalMax)
+                next = internalMax;
+            if (internalMin !== undefined && next < internalMin)
+                next = internalMin;
+
+            // Round to the number of decimal places defined in the format
+            const dotIndex = format.indexOf('.');
+            const decimalDigits =
+                dotIndex >= 0 ? format.length - dotIndex - 1 : 0;
+            const factor = Math.pow(10, decimalDigits);
+            next = Math.round(next * factor) / factor;
+        }
+
+        if (!allowEmpty && (next === null || next === undefined)) {
+            next = 0;
+        }
+
+        handleChange(next);
+
+        // If mode is blur and value changed from the last emitted value
+        if (
+            valueChangeEvent === 'blur' &&
+            lastEmittedValueRef.current !== next
+        ) {
+            const prev = lastEmittedValueRef.current;
+            lastEmittedValueRef.current = next;
+            onValueChangedRef.current?.({
+                previousValue: prev,
+                value: next,
+            });
+        }
+
+        setStrValue(
+            next !== null
+                ? allowEmpty && next === 0
+                    ? ''
+                    : formatNumberValue(next, format)
+                : '',
+        );
+    }, [
+        strValue,
+        internalMin,
+        internalMax,
+        allowEmpty,
+        format,
+        valueChangeEvent,
+        handleChange,
+    ]);
 
     useEffect(() => {
         if (!isFocused) {
-            setRawInput(
+            setStrValue(
                 value !== null && value !== undefined
                     ? isFocused
                         ? String(value)
@@ -131,88 +223,8 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
         }
     }, [value, format, allowEmpty, isFocused]);
 
-    const emitChange = useCallback((next: number | null, fromInit = false) => {
-        const prev = previousValueRef.current;
-        previousValueRef.current = next;
-        onValueChangedRef.current?.({
-            value: next,
-            previousValue: prev,
-            fromInit,
-        });
-    }, []);
-
-    const handleFocus = useCallback(() => {
-        setIsFocused(true);
-        setRawInput(value !== null && value !== undefined ? String(value) : '');
-    }, [value]);
-
-    const handleBlur = useCallback(() => {
-        setIsFocused(false);
-        const parsed = parseFloat(rawInput.replace(/,/g, ''));
-        let next: number | null =
-            rawInput === '' || isNaN(parsed) ? null : parsed;
-
-        if (next !== null) {
-            if (internalMax !== undefined && next > internalMax)
-                next = internalMax;
-            if (internalMin !== undefined && next < internalMin)
-                next = internalMin;
-        }
-
-        if (!allowEmpty && (next === null || next === undefined)) {
-            next = 0;
-        }
-
-        emitChange(next);
-        setRawInput(
-            next !== null
-                ? allowEmpty && next === 0
-                    ? ''
-                    : formatNumberValue(next, format)
-                : '',
-        );
-    }, [rawInput, internalMin, internalMax, allowEmpty, format, emitChange]);
-
-    const handleChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            setRawInput(e.target.value);
-        },
-        [],
-    );
-
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
-                onEnterKeyRef.current?.();
-                return;
-            }
-            if (
-                disableArrow &&
-                (e.key === 'ArrowUp' || e.key === 'ArrowDown')
-            ) {
-                e.preventDefault();
-                return;
-            }
-        },
-        [disableArrow],
-    );
-
-    const handleIncrement = useCallback(() => {
-        const current = value ?? 0;
-        const next = +parseFloat((current + step).toFixed(10));
-        if (internalMax !== undefined && next > internalMax) return;
-        emitChange(next);
-    }, [value, step, internalMax, emitChange]);
-
-    const handleDecrement = useCallback(() => {
-        const current = value ?? 0;
-        const next = +parseFloat((current - step).toFixed(10));
-        if (internalMin !== undefined && next < internalMin) return;
-        emitChange(next);
-    }, [value, step, internalMin, emitChange]);
-
     const displayValue = isFocused
-        ? rawInput
+        ? strValue
         : value !== null && value !== undefined
           ? allowEmpty && value === 0
               ? ''
@@ -221,67 +233,169 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
             ? ''
             : '0';
 
-    return (
-        <TextField
-            id={id}
-            name={name}
-            disabled={disabled}
-            value={displayValue}
-            inputProps={{ tabIndex, inputMode: 'decimal' }}
-            onChange={handleChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            size="small"
-            fullWidth
-            InputProps={
-                !disableArrow
-                    ? {
-                          endAdornment: (
-                              <InputAdornment position="end">
-                                  <Box
-                                      display="flex"
-                                      flexDirection="column"
-                                      sx={{ mr: -1 }}
-                                  >
-                                      <IconButton
-                                          size="small"
-                                          sx={{ p: '1px' }}
-                                          disabled={
-                                              disabled ||
-                                              (internalMax !== undefined &&
-                                                  (value ?? 0) >= internalMax)
-                                          }
-                                          onClick={handleIncrement}
-                                          tabIndex={-1}
-                                      >
-                                          <KeyboardArrowUpIcon
-                                              sx={{ fontSize: 14 }}
-                                          />
-                                      </IconButton>
-                                      <IconButton
-                                          size="small"
-                                          sx={{ p: '1px' }}
-                                          disabled={
-                                              disabled ||
-                                              (internalMin !== undefined &&
-                                                  (value ?? 0) <= internalMin)
-                                          }
-                                          onClick={handleDecrement}
-                                          tabIndex={-1}
-                                      >
-                                          <KeyboardArrowDownIcon
-                                              sx={{ fontSize: 14 }}
-                                          />
-                                      </IconButton>
-                                  </Box>
-                              </InputAdornment>
-                          ),
-                      }
-                    : undefined
+    const handleIncrement = useCallback(
+        (e?: React.SyntheticEvent) => {
+            if (e) {
+                e.stopPropagation();
+                if (e.type === 'keydown') e.preventDefault();
             }
-        />
+            const parsed = parseFloat(strValue.replace(/,/g, ''));
+            const current = (isNaN(parsed) ? valueRef.current : parsed) ?? 0;
+            const next = +parseFloat((current + step).toFixed(10));
+            if (internalMax !== undefined && next > internalMax) return;
+            handleChange(next, String(next), true);
+        },
+        [step, internalMax, strValue, handleChange],
+    );
+
+    const handleDecrement = useCallback(
+        (e?: React.SyntheticEvent) => {
+            if (e) {
+                e.stopPropagation();
+                if (e.type === 'keydown') e.preventDefault();
+            }
+            const parsed = parseFloat(strValue.replace(/,/g, ''));
+            const current = (isNaN(parsed) ? valueRef.current : parsed) ?? 0;
+            const next = +parseFloat((current - step).toFixed(10));
+            if (internalMin !== undefined && next < internalMin) return;
+            handleChange(next, String(next), true);
+        },
+        [step, internalMin, strValue, handleChange],
+    );
+
+    const handleClear = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            handleChange(allowEmpty ? null : 0, '', true);
+        },
+        [allowEmpty, handleChange],
+    );
+
+    const handleTextInput = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            const val = e.target.value;
+            const isPositive =
+                numberType === 'positive' || numberType === 'positivePercent';
+            const regex = isPositive ? /^\d*\.?\d*$/ : /^-?\d*\.?\d*$/;
+
+            if (!regex.test(val)) return;
+
+            if (val === '' || val === '-') {
+                handleChange(allowEmpty ? null : 0, val);
+                return;
+            }
+
+            const parsed = parseFloat(val);
+            if (!isNaN(parsed)) {
+                handleChange(parsed, val);
+            }
+        },
+        [numberType, allowEmpty, handleChange],
+    );
+
+    const inputPropsObj = useMemo(
+        () => ({ inputMode: 'decimal' as const }),
+        [],
+    );
+
+    const InputPropsObj = useMemo(
+        () => ({
+            endAdornment: (
+                <React.Fragment>
+                    {showClearButton &&
+                        allowEmpty &&
+                        value !== null &&
+                        value !== 0 && (
+                            <IconButton
+                                size="small"
+                                sx={{ mr: allowArrowKey ? 0.5 : 1 }}
+                                onClick={handleClear}
+                                tabIndex={-1}
+                            >
+                                <ClearIcon
+                                    titleAccess="Clear"
+                                    fontSize="small"
+                                />
+                            </IconButton>
+                        )}
+                    {allowArrowKey && (
+                        <InputAdornment position="end">
+                            <Box
+                                display="flex"
+                                flexDirection="column"
+                                sx={{ mr: -1 }}
+                            >
+                                <IconButton
+                                    size="small"
+                                    sx={{ p: '1px' }}
+                                    disabled={
+                                        disabled ||
+                                        (internalMax !== undefined &&
+                                            (value ?? 0) >= internalMax)
+                                    }
+                                    tabIndex={-1}
+                                    onClick={handleIncrement}
+                                >
+                                    <KeyboardArrowUpIcon
+                                        sx={{ fontSize: 14 }}
+                                    />
+                                </IconButton>
+                                <IconButton
+                                    size="small"
+                                    sx={{ p: '1px' }}
+                                    disabled={
+                                        disabled ||
+                                        (internalMin !== undefined &&
+                                            (value ?? 0) <= internalMin)
+                                    }
+                                    tabIndex={-1}
+                                    onClick={handleDecrement}
+                                >
+                                    <KeyboardArrowDownIcon
+                                        sx={{ fontSize: 14 }}
+                                    />
+                                </IconButton>
+                            </Box>
+                        </InputAdornment>
+                    )}
+                </React.Fragment>
+            ),
+        }),
+        [
+            showClearButton,
+            value,
+            allowEmpty,
+            allowArrowKey,
+            handleClear,
+            handleIncrement,
+            handleDecrement,
+        ],
+    );
+    return (
+        <FormControl fullWidth size="small">
+            <TextField
+                id={`cnx_number_box_${id}`}
+                name={`cnx_number_box_${name}`}
+                size="small"
+                value={displayValue}
+                disabled={disabled}
+                onChange={handleTextInput}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        onEnterKeyRef.current?.();
+                    } else if (allowArrowKey && e.key === 'ArrowUp') {
+                        handleIncrement(e);
+                    } else if (allowArrowKey && e.key === 'ArrowDown') {
+                        handleDecrement(e);
+                    }
+                }}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                inputProps={inputPropsObj}
+                InputProps={InputPropsObj}
+            />
+        </FormControl>
     );
 };
 
-export default CnxNumberBox;
+export default React.memo(CnxNumberBox);
