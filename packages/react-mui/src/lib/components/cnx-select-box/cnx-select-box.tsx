@@ -1,9 +1,8 @@
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import IconButton from '@mui/material/IconButton';
-import ClearIcon from '@mui/icons-material/Clear';
-import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
-import MenuItem from '@mui/material/MenuItem';
+import { Select, FormControl, IconButton, MenuItem } from '@mui/material';
+import {
+    Clear as ClearIcon,
+    ArrowDropDown as ArrowDropDownIcon,
+} from '@mui/icons-material';
 
 import React, {
     useCallback,
@@ -203,7 +202,7 @@ export const CnxSelectBox: React.FC<CnxSelectBoxProps> = ({
     };
 
     const renderIcon = useCallback((iconProp: any) => {
-        return <ArrowDropDown titleAccess="Open" {...iconProp} />;
+        return <ArrowDropDownIcon titleAccess="Open" {...iconProp} />;
     }, []);
 
     const renderClearIcon = useCallback(

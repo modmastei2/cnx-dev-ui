@@ -4,7 +4,8 @@
         "rootDir": ".",
         "sourceMap": true,
         "declaration": false,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
+        "preserveSymlinks": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "importHelpers": true,
@@ -22,7 +23,8 @@
             ],
             "@cnx-dev/react-devextreme": [
                 "packages/react-devextreme/src/index.ts"
-            ]
+            ],
+            "@cnx-dev/react-mui": ["packages/react-mui/src/index.ts"]
         }
     },
     "exclude": ["node_modules", "tmp"]

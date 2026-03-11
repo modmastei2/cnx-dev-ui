@@ -1,9 +1,8 @@
-import FormControl from '@mui/material/FormControl';
-import TextField from '@mui/material/TextField';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { FormControl, TextField, IconButton } from '@mui/material';
+import { Clear as ClearIcon } from '@mui/icons-material';
 import { ValueChangedEvent } from '../cnx-value-changed.types';
-import IconButton from '@mui/material/IconButton';
-import ClearIcon from '@mui/icons-material/Clear';
+import { useCallback, useEffect, useRef } from 'react';
+import React from 'react';
 
 export interface CnxTextBoxProps {
     id?: string;

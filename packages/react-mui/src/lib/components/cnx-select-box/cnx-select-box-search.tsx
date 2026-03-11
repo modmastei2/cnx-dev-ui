@@ -1,6 +1,4 @@
-import Autocomplete from '@mui/material/Autocomplete';
-import TextField from '@mui/material/TextField';
-import CircularProgress from '@mui/material/CircularProgress';
+import { Autocomplete, TextField, CircularProgress } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CascadeRule } from '../cnx-cascade-value.types';
 import type { ValueChangedEvent } from '../cnx-value-changed.types';

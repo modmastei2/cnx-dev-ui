@@ -60,6 +60,11 @@ export { CnxNumberBox } from './lib/components/cnx-number-box/cnx-number-box';
 
 export type { CnxNumberBoxProps } from './lib/components/cnx-number-box/cnx-number-box';
 
+// --- TextBox ---
+export { CnxTextBox } from './lib/components/cnx-text-box/cnx-text-box';
+
+export type { CnxTextBoxProps } from './lib/components/cnx-text-box/cnx-text-box';
+
 // --- DateBox ---
 export { CnxDateBox } from './lib/components/cnx-date-box/cnx-date-box';
 
@@ -82,3 +87,7 @@ export {
     RadioGroupDataProviderContext,
     useRadioGroupDataProvider,
 } from './lib/components/cnx-radio-group/cnx-radio-group.context';
+
+// --- Data Provider ---
+export { CnxDataProvider } from './lib/core/cnx-data-provider';
+export type { CnxDataProviderProps } from './lib/core/cnx-data-provider';

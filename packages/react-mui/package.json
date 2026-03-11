@@ -1,6 +1,6 @@
 {
     "name": "@cnx-dev/react-mui",
-    "version": "1.0.0",
+    "version": "1.0.20",
     "description": "CNX Dev - React MUI UI Component Library",
     "author": "cnx-dev",
     "license": "UNLICENSED",
@@ -11,13 +11,13 @@
     "homepage": "https://github.com/modmastei2/cnx-dev-ui#readme",
     "readme": "../../README.md",
     "peerDependencies": {
-        "@emotion/react": ">=11.14.0",
-        "@emotion/styled": ">=11.14.1",
-        "@mui/icons-material": ">=7.3.8",
-        "@mui/material": ">=7.3.8",
-        "@mui/x-date-pickers": ">=8.0.0",
-        "dayjs": ">=1.11.19",
-        "react": ">=18.0.0",
-        "react-dom": ">=18.0.0"
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.0",
+        "@mui/icons-material": "^7.3.8",
+        "@mui/material": "^7.3.8",
+        "@mui/x-date-pickers": "^8.27.2",
+        "dayjs": "^1.11.19",
+        "react": "^18 || ^19",
+        "react-dom": "^18 || ^19"
     }
 }

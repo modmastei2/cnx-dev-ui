@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { ValueChangedEvent } from '../cnx-value-changed.types';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 export interface CnxDateBoxProps {
     id?: string;
@@ -171,16 +172,18 @@ export const CnxDateBox: React.FC<CnxDateBoxProps> = ({
     );
 
     return (
-        <DatePicker
-            value={formatedValue}
-            onChange={handleChange}
-            format={displayFormat}
-            minDate={parsedMinDate ?? undefined}
-            maxDate={parsedMaxDate ?? undefined}
-            disabled={disabled}
-            shouldDisableDate={shouldDisableDate}
-            slotProps={slotProps}
-        />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+                value={formatedValue}
+                onChange={handleChange}
+                format={displayFormat}
+                minDate={parsedMinDate ?? undefined}
+                maxDate={parsedMaxDate ?? undefined}
+                disabled={disabled}
+                shouldDisableDate={shouldDisableDate}
+                slotProps={slotProps}
+            />
+        </LocalizationProvider>
     );
 };
 

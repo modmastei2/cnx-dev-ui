@@ -5,10 +5,7 @@ import React, {
     useMemo,
     useRef,
 } from 'react';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Radio from '@mui/material/Radio';
-import FormControl from '@mui/material/FormControl';
+import { RadioGroup, FormControlLabel, Radio, FormControl } from '@mui/material';
 import { useRadioGroupDataProvider } from './cnx-radio-group.context';
 import type {
     RadioGroupKey,

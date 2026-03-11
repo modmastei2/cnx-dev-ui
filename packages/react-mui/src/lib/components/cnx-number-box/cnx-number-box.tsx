@@ -1,23 +1,25 @@
-import React, {
-    useEffect,
-    useRef,
-    useState,
-    useCallback,
-    useMemo,
-} from 'react';
-import TextField from '@mui/material/TextField';
-import InputAdornment from '@mui/material/InputAdornment';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import Box from '@mui/material/Box';
-import FormControl from '@mui/material/FormControl';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
+import {
+    TextField,
+    InputAdornment,
+    Box,
+    FormControl,
+    IconButton,
+} from '@mui/material';
+import {
+    KeyboardArrowUp as KeyboardArrowUpIcon,
+    KeyboardArrowDown as KeyboardArrowDownIcon,
+    Clear as ClearIcon,
+} from '@mui/icons-material';
 import { ValueChangedEvent } from '../cnx-value-changed.types';
-import IconButton from '@mui/material/IconButton';
-import ClearIcon from '@mui/icons-material/Clear';
+
+// ── ข้อ 7: ย้าย static object ออกนอก component ────────────────────────────
+const INPUT_PROPS = { inputMode: 'decimal' as const };
 
 export interface CnxNumberBoxProps {
     id?: string;
     name?: string;
+    label?: string; // ── ข้อ 10: เพิ่ม label prop
     value?: number | null;
     format?: string;
     numberType?: 'positive' | 'negative' | 'percent' | 'positivePercent' | null;
@@ -46,9 +48,18 @@ function formatNumberValue(val: number | null, format: string): string {
     }).format(val);
 }
 
+// ── ข้อ 4: helper round ตาม decimal ของ format ───────────────────────────
+function roundToFormat(val: number, format: string): number {
+    const dotIndex = format.indexOf('.');
+    const decimalDigits = dotIndex >= 0 ? format.length - dotIndex - 1 : 0;
+    const factor = Math.pow(10, decimalDigits);
+    return Math.round(val * factor) / factor;
+}
+
 export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
     id,
     name,
+    label,
     value = null,
     format = '#,##0.00',
     numberType,
@@ -64,22 +75,28 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
     onValueChanged,
     onEnterKey,
 }) => {
+    // ── ข้อ 8: sync refs โดยตรงใน render แทน useEffect ──────────────────
     const valueRef = useRef(value);
     const onValueChangedRef = useRef(onValueChanged);
     const onEnterKeyRef = useRef(onEnterKey);
+    valueRef.current = value;
+    onValueChangedRef.current = onValueChanged;
+    onEnterKeyRef.current = onEnterKey;
 
-    // Keep track of the last value emitted during blur to prevent duplicate emissions
-    const lastEmittedValueRef = useRef(value);
-
-    useEffect(() => {
-        valueRef.current = value;
-        onValueChangedRef.current = onValueChanged;
-        onEnterKeyRef.current = onEnterKey;
-    }, [value, onValueChanged, onEnterKey]);
+    // ── ข้อ 6: ใช้ valueRef แทน lastEmittedValueRef เพื่อเช็คการ emit ────
+    // (ลบ lastEmittedValueRef ออก)
 
     const [isFocused, setIsFocused] = useState(false);
-    const [strValue, setStrValue] = useState<string>(
-        value !== null && value !== undefined ? String(value) : '',
+
+    // ── ข้อ 2: ให้ strValue เป็น source of truth เดียว ───────────────────
+    const [strValue, setStrValue] = useState<string>(() =>
+        value !== null && value !== undefined
+            ? allowEmpty && value === 0
+                ? ''
+                : formatNumberValue(value, format)
+            : allowEmpty
+              ? ''
+              : '0',
     );
 
     const maxPossibleDigit = 15;
@@ -135,7 +152,6 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
             if (oldValue === newValue) return;
 
             if (valueChangeEvent === 'change' || forceEmit) {
-                lastEmittedValueRef.current = newValue;
                 onValueChangedRef.current?.({
                     previousValue: oldValue,
                     value: newValue,
@@ -147,8 +163,8 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
 
     const handleFocus = useCallback(() => {
         setIsFocused(true);
+        // แสดงตัวเลขดิบตอน focus เพื่อให้แก้ไขง่าย
         setStrValue(value !== null && value !== undefined ? String(value) : '');
-        lastEmittedValueRef.current = value;
     }, [value]);
 
     const handleBlur = useCallback(() => {
@@ -162,40 +178,30 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
                 next = internalMax;
             if (internalMin !== undefined && next < internalMin)
                 next = internalMin;
-
-            // Round to the number of decimal places defined in the format
-            const dotIndex = format.indexOf('.');
-            const decimalDigits =
-                dotIndex >= 0 ? format.length - dotIndex - 1 : 0;
-            const factor = Math.pow(10, decimalDigits);
-            next = Math.round(next * factor) / factor;
+            next = roundToFormat(next, format); // ── ข้อ 4: ใช้ helper
         }
 
         if (!allowEmpty && (next === null || next === undefined)) {
             next = 0;
         }
 
-        handleChange(next);
-
-        // If mode is blur and value changed from the last emitted value
-        if (
-            valueChangeEvent === 'blur' &&
-            lastEmittedValueRef.current !== next
-        ) {
-            const prev = lastEmittedValueRef.current;
-            lastEmittedValueRef.current = next;
+        // ── ข้อ 6: เช็คกับ valueRef.current (ค่าจริงจาก parent) แทน lastEmittedValueRef
+        if (valueChangeEvent === 'blur' && valueRef.current !== next) {
             onValueChangedRef.current?.({
-                previousValue: prev,
+                previousValue: valueRef.current,
                 value: next,
             });
         }
 
+        // ── ข้อ 2: set strValue เป็น formatted string ทันที ไม่ต้องมี useEffect แยก
         setStrValue(
             next !== null
                 ? allowEmpty && next === 0
                     ? ''
                     : formatNumberValue(next, format)
-                : '',
+                : allowEmpty
+                  ? ''
+                  : '0',
         );
     }, [
         strValue,
@@ -204,34 +210,39 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
         allowEmpty,
         format,
         valueChangeEvent,
-        handleChange,
     ]);
 
-    useEffect(() => {
+    // ── ข้อ 2: sync strValue เมื่อ value เปลี่ยนจาก parent (ขณะไม่ได้ focus)
+    // ไม่มี useEffect ซ้ำซ้อนแล้ว — จัดการใน handleBlur + handleFocus เพียงพอ
+    // แต่ยังต้อง sync เมื่อ parent เปลี่ยน value ขณะ !isFocused
+    const prevValueRef = useRef(value);
+    if (!isFocused && prevValueRef.current !== value) {
+        prevValueRef.current = value;
+        const nextStr =
+            value !== null && value !== undefined
+                ? allowEmpty && value === 0
+                    ? ''
+                    : formatNumberValue(value, format)
+                : allowEmpty
+                  ? ''
+                  : '0';
+        // setStrValue ใน render ไม่ได้ → ใช้ useEffect เฉพาะจุดนี้จุดเดียว
+    }
+
+    // useEffect เดียวที่เหลือ: sync เมื่อ parent เปลี่ยน value ขณะ !isFocused
+    React.useEffect(() => {
         if (!isFocused) {
             setStrValue(
                 value !== null && value !== undefined
-                    ? isFocused
-                        ? String(value)
-                        : allowEmpty && value === 0
-                          ? ''
-                          : formatNumberValue(value, format)
+                    ? allowEmpty && value === 0
+                        ? ''
+                        : formatNumberValue(value, format)
                     : allowEmpty
                       ? ''
                       : '0',
             );
         }
-    }, [value, format, allowEmpty, isFocused]);
-
-    const displayValue = isFocused
-        ? strValue
-        : value !== null && value !== undefined
-          ? allowEmpty && value === 0
-              ? ''
-              : formatNumberValue(value, format)
-          : allowEmpty
-            ? ''
-            : '0';
+    }, [value, format, allowEmpty]); // isFocused ไม่จำเป็นใน deps เพราะเป็นแค่ guard
 
     const handleIncrement = useCallback(
         (e?: React.SyntheticEvent) => {
@@ -241,11 +252,12 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
             }
             const parsed = parseFloat(strValue.replace(/,/g, ''));
             const current = (isNaN(parsed) ? valueRef.current : parsed) ?? 0;
-            const next = +parseFloat((current + step).toFixed(10));
+            // ── ข้อ 4: round ตาม format ก่อน emit
+            const next = roundToFormat(current + step, format);
             if (internalMax !== undefined && next > internalMax) return;
             handleChange(next, String(next), true);
         },
-        [step, internalMax, strValue, handleChange],
+        [step, internalMax, strValue, format, handleChange],
     );
 
     const handleDecrement = useCallback(
@@ -256,11 +268,12 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
             }
             const parsed = parseFloat(strValue.replace(/,/g, ''));
             const current = (isNaN(parsed) ? valueRef.current : parsed) ?? 0;
-            const next = +parseFloat((current - step).toFixed(10));
+            // ── ข้อ 4: round ตาม format ก่อน emit
+            const next = roundToFormat(current - step, format);
             if (internalMin !== undefined && next < internalMin) return;
             handleChange(next, String(next), true);
         },
-        [step, internalMin, strValue, handleChange],
+        [step, internalMin, strValue, format, handleChange],
     );
 
     const handleClear = useCallback(
@@ -273,29 +286,36 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
 
     const handleTextInput = useCallback(
         (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-            const val = e.target.value;
+            const raw = e.target.value;
             const isPositive =
                 numberType === 'positive' || numberType === 'positivePercent';
             const regex = isPositive ? /^\d*\.?\d*$/ : /^-?\d*\.?\d*$/;
 
-            if (!regex.test(val)) return;
+            if (!regex.test(raw)) return;
 
-            if (val === '' || val === '-') {
-                handleChange(allowEmpty ? null : 0, val);
+            if (raw === '' || raw === '-') {
+                handleChange(allowEmpty ? null : 0, raw);
                 return;
             }
 
-            const parsed = parseFloat(val);
+            // ── ข้อ 5: normalize ".5" → "0.5" เพื่อป้องกัน strValue แปลกๆ
+            const normalized = raw.startsWith('.')
+                ? '0' + raw
+                : raw.startsWith('-.')
+                  ? '-0' + raw.slice(1)
+                  : raw;
+            const parsed = parseFloat(normalized);
             if (!isNaN(parsed)) {
-                handleChange(parsed, val);
+                handleChange(parsed, normalized);
             }
         },
         [numberType, allowEmpty, handleChange],
     );
 
-    const inputPropsObj = useMemo(
-        () => ({ inputMode: 'decimal' as const }),
-        [],
+    // ── ข้อ 10: เพิ่ม aria-label ใน inputProps
+    const inputPropsWithA11y = useMemo(
+        () => ({ ...INPUT_PROPS, 'aria-label': label ?? id }),
+        [label, id],
     );
 
     const InputPropsObj = useMemo(
@@ -311,6 +331,7 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
                                 sx={{ mr: allowArrowKey ? 0.5 : 1 }}
                                 onClick={handleClear}
                                 tabIndex={-1}
+                                aria-label="Clear"
                             >
                                 <ClearIcon
                                     titleAccess="Clear"
@@ -334,6 +355,7 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
                                             (value ?? 0) >= internalMax)
                                     }
                                     tabIndex={-1}
+                                    aria-label="Increment"
                                     onClick={handleIncrement}
                                 >
                                     <KeyboardArrowUpIcon
@@ -349,6 +371,7 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
                                             (value ?? 0) <= internalMin)
                                     }
                                     tabIndex={-1}
+                                    aria-label="Decrement"
                                     onClick={handleDecrement}
                                 >
                                     <KeyboardArrowDownIcon
@@ -366,18 +389,23 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
             value,
             allowEmpty,
             allowArrowKey,
+            disabled,
+            internalMax,
+            internalMin,
             handleClear,
             handleIncrement,
             handleDecrement,
         ],
     );
+
     return (
         <FormControl fullWidth size="small">
             <TextField
                 id={`cnx_number_box_${id}`}
                 name={`cnx_number_box_${name}`}
+                label={label} // ── ข้อ 10
                 size="small"
-                value={displayValue}
+                value={strValue} // ── ข้อ 2: ใช้ strValue เป็น source of truth เดียว
                 disabled={disabled}
                 onChange={handleTextInput}
                 onKeyDown={(e) => {
@@ -391,7 +419,7 @@ export const CnxNumberBox: React.FC<CnxNumberBoxProps> = ({
                 }}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                inputProps={inputPropsObj}
+                inputProps={inputPropsWithA11y}
                 InputProps={InputPropsObj}
             />
         </FormControl>

@@ -8,12 +8,16 @@ import {
     TagBoxViewModel,
 } from './cnx-tag-box.types';
 import React from 'react';
-import Autocomplete from '@mui/material/Autocomplete';
-import Chip from '@mui/material/Chip';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import CircularProgress from '@mui/material/CircularProgress';
-import TextField from '@mui/material/TextField';
+import {
+    Autocomplete,
+    Chip,
+    CircularProgress,
+    TextField,
+} from '@mui/material';
+import {
+    CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
+    CheckBox as CheckBoxIcon,
+} from '@mui/icons-material';
 
 export interface CnxTagBoxProps {
     id?: string;
