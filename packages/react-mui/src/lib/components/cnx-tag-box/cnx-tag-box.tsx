@@ -218,21 +218,6 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
             disableCloseOnSelect={showSelectionControl}
             groupBy={(option) => (groupByExpr ? option[groupByExpr] : '')}
             value={selectedOption}
-            renderValue={(values: TagBoxViewModel[], getItemProps) =>
-                values.map((option, index) => {
-                    const { key, ...itemProps } = getItemProps({ index });
-
-                    return (
-                        <Chip
-                            key={key}
-                            variant="filled"
-                            label={option[displayExpr]}
-                            size="small"
-                            {...itemProps}
-                        ></Chip>
-                    );
-                })
-            }
             getOptionLabel={(option) => option[displayExpr] ?? ''}
             renderOption={(props, option, { selected }) => {
                 const { key, ...optionProps } = props;
@@ -266,6 +251,9 @@ export const CnxTagBox: React.FC<CnxTagBoxProps> = ({
                         .toLowerCase()
                         .includes(lower),
                 );
+            }}
+            slotProps={{
+                chip: { size: 'small', variant: 'filled' },
             }}
             onChange={(_, newOptions) => {
                 const newValues = Array.isArray(newOptions)
